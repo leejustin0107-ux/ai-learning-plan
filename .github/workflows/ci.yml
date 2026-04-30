@@ -17,7 +17,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgres://user:pass@localhost:5432/planner_test
+      DATABASE_URL: postgres://user:pass@localhost:5433/planner_test
       JWT_SECRET: test_jwt_secret_min_32_characters_long
       JWT_REFRESH_SECRET: test_refresh_secret_min_32_chars_long
       GEMINI_API_KEY: test_key
