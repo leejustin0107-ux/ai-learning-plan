@@ -1,38 +1,39 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+ 
 export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  const handleLogin = () => {
-    // fake token for testing protected routes
-    localStorage.setItem('token', 'test-token');
-
-    // redirect to dashboard
-    navigate('/');
-  };
-
-   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        flexDirection: 'column',
-        gap: '20px',
-      }}
-    >
-      <h1>Login Page</h1>
-      <button
-        onClick={handleLogin}
-        style={{
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-        }}
-      >
-        Login
-      </button>
-    </div>
+ 
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Login gagal');
+      }
+      localStorage.setItem('token', data.token);
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+ 
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1>Login</h1>
+      {error && <p className="error">{error}</p>}
+      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" required />
+      <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required />
+      <button type="submit">Masuk</button>
+    </form>
   );
 }
