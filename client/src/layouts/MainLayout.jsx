@@ -1,4 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom';
+import '../styles/mainLayout.css'
+
 export default function MainLayout() {
   return (
     <div className="app-layout">
@@ -8,6 +10,7 @@ export default function MainLayout() {
         <NavLink to="/goals">Goals</NavLink>
         <NavLink to="/calendar">Kalender</NavLink>
         <NavLink to="/progress">Progress</NavLink>
+        <NavLink to="/profile">Profile</NavLink>
       </nav>
       <main className="content">
         <Outlet />

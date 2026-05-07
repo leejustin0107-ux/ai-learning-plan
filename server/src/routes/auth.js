@@ -30,6 +30,10 @@ router.post('/register', async (req, res, next) => {
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'Email sudah terdaftar' });
     }
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'all fields required'});
+    }
  
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await db.query(

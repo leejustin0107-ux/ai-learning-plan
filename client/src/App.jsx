@@ -9,6 +9,9 @@ import Dashboard from './pages/Dashboard';
 import Goals from './pages/Goals';
 import Calendar from './pages/Calendar';
 import Progress from './pages/Progress';
+import Profile from './pages/Profile';
+import EditProfile from './pages/EditProfile';
+
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   return token ? children : <Navigate to="/login" />;
@@ -24,6 +27,8 @@ export default function App() {
           <Route path="/goals" element={<Goals />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/progress" element={<Progress />} />
+          <route path="/Profile" element={<Profile />} />
+          <route path="/editProfile" element={<EditProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

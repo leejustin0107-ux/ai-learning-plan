@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import '../styles/login.css';
  
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -28,12 +29,18 @@ export default function Login() {
   }
  
   return (
+    <div className="center-container">
     <form onSubmit={handleSubmit}>
       <h1>Login</h1>
       {error && <p className="error">{error}</p>}
       <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" required />
+      <br></br>
       <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required />
+      <br></br>
       <button type="submit">Masuk</button>
+      <br></br>
+      <h4>If you dont have an account click <Link to="/register">Here!</Link> to register</h4>
     </form>
+    </div>
   );
 }
