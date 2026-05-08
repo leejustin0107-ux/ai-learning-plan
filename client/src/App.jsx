@@ -10,7 +10,7 @@ import Goals from './pages/Goals';
 import Calendar from './pages/Calendar';
 import Progress from './pages/Progress';
 import Profile from './pages/Profile';
-import EditProfile from './pages/EditProfile';
+import EditProfile from './pages/editProfile';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -27,8 +27,8 @@ export default function App() {
           <Route path="/goals" element={<Goals />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/progress" element={<Progress />} />
-          <route path="/Profile" element={<Profile />} />
-          <route path="/editProfile" element={<EditProfile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/editProfile" element={<EditProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

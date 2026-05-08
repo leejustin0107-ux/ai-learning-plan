@@ -26,4 +26,4 @@ export default function Profile() {
       <button onClick={() => navigate('/editProfile')}>Edit Profile</button>
     </div>
   );
-}
+} 
