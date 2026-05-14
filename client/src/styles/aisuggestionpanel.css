@@ -1,0 +1,156 @@
+.ai-panel {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 16px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.ai-panel h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #111827;
+}
+
+.ai-panel p {
+  line-height: 1.5;
+}
+
+.ai-panel button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.ai-panel button:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.ai-panel button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-state {
+  background-color: #fff1f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.summary {
+  background-color: white;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 18px;
+  color: #374151;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.suggestion-card {
+  background-color: white;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  transition: 0.2s ease;
+}
+
+.suggestion-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.suggestion-card h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #111827;
+}
+
+.rationale {
+  color: #4b5563;
+  font-size: 14px;
+  background-color: #f3f4f6;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.meta {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 10px;
+}
+
+.suggestion-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.suggestion-actions button:first-child {
+  background-color: #16a34a;
+}
+
+.suggestion-actions button:first-child:hover:not(:disabled) {
+  background-color: #15803d;
+}
+
+.suggestion-actions button:nth-child(2) {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.suggestion-actions button:nth-child(2):hover:not(:disabled) {
+  background-color: #d1d5db;
+}
+
+.accepted-card {
+  border-color: #22c55e;
+  background-color: #f0fdf4;
+}
+
+.accepted-message {
+  color: #15803d;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.empty-state {
+  color: #6b7280;
+  font-style: italic;
+  background-color: white;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.refresh-suggestions {
+  margin-top: 18px;
+  background-color: #4b5563 !important;
+}
+
+.refresh-suggestions:hover {
+  background-color: #374151 !important;
+}
+
+@media (max-width: 600px) {
+  .ai-panel {
+    padding: 16px;
+  }
+
+  .suggestion-actions {
+    flex-direction: column;
+  }
+
+  .suggestion-actions button,
+  .refresh-suggestions {
+    width: 100%;
+  }
+}
