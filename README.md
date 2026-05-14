@@ -366,4 +366,3 @@ Dokumentasi keputusan arsitektur dapat dilihat di:
 - [ADR-001: Menggunakan Gemini API sebagai LLM](docs/adr/ADR-001-llm-provider.md)
 - [ADR-002: Menggunakan PostgreSQL sebagai Database Utama](docs/adr/ADR-002-database.md)
 - [ADR-003: Menggunakan Express.js sebagai Backend Framework](docs/adr/ADR-003-backend-framework.md)
-
