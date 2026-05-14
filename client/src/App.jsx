@@ -2,6 +2,7 @@
 // Lihat modul Scaffolding — sub modul "Routing, Layout & UI Dasar".
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary'
 import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,7 +11,6 @@ import Goals from './pages/Goals';
 import Calendar from './pages/Calendar';
 import Progress from './pages/Progress';
 import Profile from './pages/Profile';
-import EditProfile from './pages/editProfile';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -19,18 +19,19 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/progress" element={<Progress />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/editProfile" element={<EditProfile />} />
-        </Route>
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/progress" element={<Progress />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+        </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

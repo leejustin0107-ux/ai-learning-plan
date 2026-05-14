@@ -11,6 +11,27 @@ const AuthInput = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 });
+
+const DayAvailability = z.object({
+  available: z.boolean(),
+  start: z.string(),
+  end: z.string(),
+})
+
+const ProfileInput = z.object({
+  timezone: z.string().min(1),
+  preferred_time: z.enum(['morning', 'afternoon', 'evening']),
+  weekly_target_hours: z.coerce.number().min(1).max(168),
+  availability: z.object({
+    monday: DayAvailability,
+    tuesday: DayAvailability,
+    wednesday: DayAvailability,
+    thursday: DayAvailability,
+    friday: DayAvailability,
+    saturday: DayAvailability,
+    sunday: DayAvailability,
+  })
+});
  
 function generateToken(userId) {
   return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '15m' });
@@ -105,3 +126,31 @@ router.get('/me', authenticate, async (req, res, next) => {
 });
  
 module.exports = router;
+
+// Put update user profile
+router.put('/me', authenticate, async (req, res, next) => {
+  try {
+    const {
+      timezone,
+      preferred_time,
+      weekly_target_hours,
+      availability,
+    } = ProfileInput.parse(req.body);
+
+    const result = await db.query(
+      `UPDATE profiles
+      SET timezone = $1,
+          preferred_time = $2,
+          weekly_target_hours = $3,
+          availability = $4
+      WHERE user_id = $5
+      RETURNING timezone, preferred_time, weekly_target_hours, availability`,
+      [timezone, preferred_time, weekly_target_hours, JSON.stringify(availability), req.user.id,]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('PUT /me error:', err);
+    next(err);
+  }
+});
