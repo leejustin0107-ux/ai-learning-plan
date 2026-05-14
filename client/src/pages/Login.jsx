@@ -33,8 +33,10 @@ export default function Login() {
     <form onSubmit={handleSubmit}>
       <h1>Login</h1>
       {error && <p className="error">{error}</p>}
+      <p>Email:</p>
       <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" required />
       <br></br>
+      <p>Password:</p>
       <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required />
       <br></br>
       <button type="submit">Masuk</button>
