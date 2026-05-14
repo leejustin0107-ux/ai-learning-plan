@@ -1,7 +1,3 @@
-// TODO: Implementasikan LLM service secara bertahap:
-// 1. Setup (Observability): definisikan SuggestionSchema dan validateAIOutput
-// 2. Scaffolding (AI Stub): tambahkan koneksi Gemini dan mock mode
-// 3. Cycle 1: implementasikan callLLM penuh dengan konteks dari database
 
 require('dotenv').config();
 const { z } = require('zod');
@@ -28,9 +24,19 @@ const SuggestionSchema = z.object({
 // Validasi output AI — return null jika tidak valid
 function validateAIOutput(raw) {
   try {
-    const parsed = JSON.parse(raw);
+    let cleaned = raw.trim();
+
+    cleaned = cleaned
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```$/i, '')
+      .trim();
+
+    const parsed = JSON.parse(cleaned);
+
     return SuggestionSchema.parse(parsed);
   } catch (error) {
+    console.error('AI validation failed:', error.message);
     return null;
   }
 }
