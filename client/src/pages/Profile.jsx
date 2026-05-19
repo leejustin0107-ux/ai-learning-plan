@@ -148,6 +148,10 @@ export default function Profile() {
       },
     }));
   }
+
+  function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+  }
   
   return (
     <div className="main-layout">
@@ -157,7 +161,7 @@ export default function Profile() {
         {error && <p className="error">{error}</p>}
         <p><strong>Email:</strong> {user.email}</p>
         <br></br>
-        <p><strong>Created At:</strong> {user.created_at}</p>
+        <p><strong>Created At:</strong> {formatDate(user.created_at)}</p>
         <br></br>
         <p><strong>Timezone:</strong> {user.timezone}</p>
         <br></br>

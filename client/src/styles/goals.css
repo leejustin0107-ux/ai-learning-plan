@@ -1,8 +1,8 @@
 .goals-page {
-  min-height: 100vh;
-  padding: 40px;
-  background-color: #f5f7fc;
-  color: #111827;
+  width: 100%;
+  max-width: none;
+  padding: 32px;
+  position: relative;
 }
 
 .goals-header {
@@ -21,79 +21,61 @@
   font-size: 15px;
 }
 
-.goal-form {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-
+.goal-modal-form {
   width: 100%;
-  max-width: 760px;
 
-  background-color: #ffffff;
-  padding: 18px 22px;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 
-  margin-bottom: 28px;
+  margin: 0;
+  padding: 0;
 
-  min-height: auto;
-  height: auto;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+
+  box-sizing: border-box;
 }
 
-/* Force inputs to normal height */
-.goal-form input {
-  height: 44px;
-  min-height: 44px;
-  max-height: 44px;
+.goal-modal-form * {
+  box-sizing: border-box;
+}
 
-  padding: 0 14px;
+.goal-modal-form .form-field {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-modal-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.goal-modal-form input {
+  width: 100%;
+  height: 44px;
+
+  padding: 0 12px;
+
   border: 1px solid #d1d5db;
   border-radius: 10px;
 
   font-size: 14px;
-  background-color: white;
   color: #111827;
+  background-color: #ffffff;
 
-  box-sizing: border-box;
-}
-
-.goal-form input[type="text"] {
-  flex: 1;
-  min-width: 260px;
-}
-
-.goal-form input[type="date"] {
-  width: 180px;
-}
-
-.goal-form input:focus {
   outline: none;
+}
+
+.goal-modal-form input:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-/* Force button to normal size */
-.goal-form button {
-  height: 44px;
-  min-height: 44px;
-  max-height: 44px;
-
-  padding: 0 22px;
-  border: none;
-  border-radius: 10px;
-
-  background-color: #2563eb;
-  color: white;
-
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-  box-sizing: border-box;
-}
-
-.goal-form button:hover {
-  background-color: #1d4ed8;
 }
 
 /* Empty state */
@@ -110,16 +92,12 @@
 }
 
 .goals-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
   width: 100%;
-  max-width: 850px;
-
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 0;
+  margin: 0;
 }
 
 .goal-card {
@@ -167,89 +145,1068 @@
   }
 }
 
-.manual-task-form {
-  margin-top: 18px;
-  margin-bottom: 18px;
-
-  padding: 18px;
-  border-radius: 14px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.manual-task-form h4 {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: 17px;
-  color: #111827;
-}
-
-.form-field {
+.goals-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 24px;
 }
 
-.form-field label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
+.add-goal-button {
+  position: absolute;
+  top: 32px;
+  right: 32px;
 
-.form-field input,
-.form-field select {
-  width: 100%;
-  height: 42px;
-  min-height: 42px;
-  max-height: 42px;
-
-  padding: 0 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-
-  font-size: 14px;
-  background-color: white;
-  color: #111827;
-
-  box-sizing: border-box;
-}
-
-.form-field input:focus,
-.form-field select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-.manual-task-form button {
-  grid-column: 1 / -1;
-
-  width: 100%;
-  height: 42px;
-
+  padding: 10px 18px;
   border: none;
   border-radius: 10px;
-  background-color: #16a34a;
+
+  background-color: #2563eb;
   color: white;
 
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+  transition: 0.2s ease;
 }
 
-.manual-task-form button:hover {
-  background-color: #15803d;
+.add-goal-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.add-goal-button:active {
+  transform: translateY(0);
+}
+
+.goals-page {
+  position: relative;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+
+  z-index: 1000;
+}
+
+.goal-modal {
+  width: 100%;
+  max-width: 460px;
+
+  background-color: white;
+  border-radius: 18px;
+  padding: 28px;
+
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+
+  animation: modalFadeIn 0.2s ease;
+}
+
+.goal-modal-header {
+  margin-bottom: 20px;
+}
+
+.goal-modal-header h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  color: #111827;
+}
+
+.goal-modal-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.goal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.goal-form .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.goal-form input {
+  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  font-size: 14px;
+  outline: none;
+}
+
+.goal-form input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 10px 16px;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.primary-button {
+  border: none;
+  background-color: #2563eb;
+  color: white;
+}
+
+.primary-button:hover {
+  background-color: #1d4ed8;
+}
+
+.secondary-button {
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+}
+
+.secondary-button:hover {
+  background-color: #f3f4f6;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.goal-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.goal-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.goal-card {
+  position: relative;
+}
+
+.goal-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  margin-bottom: 18px;
+}
+
+.goal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(8px);
+
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.goal-card:hover .goal-action-buttons {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+
+/* Make all 3 buttons consistent */
+.add-task-button,
+.ai-popup-button,
+.task-dropdown-button {
+  height: 36px;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+
+/* + Button */
+.add-task-button {
+  width: 36px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #2563eb;
+  color: white;
+
+  font-size: 20px;
+  line-height: 1;
+}
+
+.add-task-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+
+/* AI Button */
+.ai-popup-button {
+  width: 36px;
+  padding: 0;
+
+  background-color: #7c3aed;
+  color: white;
+}
+
+.ai-popup-button:hover {
+  background-color: #6d28d9;
+  transform: translateY(-1px);
+}
+
+
+/* Show Tasks Button */
+.task-dropdown-button {
+  width: auto;
+  padding: 0 14px;
+
+  background-color: #2563eb;
+  color: white;
+}
+
+.task-dropdown-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+
+/* Mobile: show buttons always because hover is not reliable */
+@media (max-width: 700px) {
+  .goal-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .goal-action-buttons {
+    width: 100%;
+
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .task-dropdown-button {
+    flex: 1;
+  }
+}
+
+.ai-popup-button {
+  width: auto;
+
+  padding: 9px 14px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #7c3aed;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.ai-popup-button:hover {
+  background-color: #6d28d9;
+  transform: translateY(-1px);
+}
+
+.ai-popup-button:active {
+  transform: translateY(0);
+}
+
+
+.ai-modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  padding: 40px 24px;
+
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+
+  z-index: 1300;
+
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.ai-modal {
+  width: 100%;
+  max-width: 720px;
+
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+
+  animation: aiModalFadeIn 0.2s ease;
+}
+
+
+.ai-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+
+  margin-bottom: 20px;
+}
+
+.ai-modal-header h2 {
+  margin: 0;
+
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.ai-modal-header p {
+  margin: 6px 0 0;
+
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.ai-modal-close {
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #f3f4f6;
+  color: #374151;
+
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.ai-modal-close:hover {
+  background-color: #e5e7eb;
+}
+
+
+@keyframes aiModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+@media (max-width: 700px) {
+  .goal-action-buttons {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .ai-popup-button,
+  .task-dropdown-button {
+    flex: 1;
+  }
+
+  .ai-modal-overlay {
+    padding: 20px 16px;
+  }
+
+  .ai-modal {
+    padding: 22px;
+  }
+
+  .ai-modal-header {
+    align-items: flex-start;
+  }
+}
+
+.task-dropdown-button {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 10px;
+
+  background-color: #2563eb;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.task-dropdown-button:hover {
+  background-color: #1d4ed8;
+}
+
+.tasks-dropdown {
+  margin-bottom: 18px;
+  padding: 16px;
+
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+
+  padding: 14px;
+  border-radius: 12px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+}
+
+.task-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.task-description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.task-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.task-meta span {
+  padding: 5px 8px;
+  border-radius: 999px;
+
+  background-color: #eef2ff;
+  color: #3730a3;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.no-tasks-message {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
 }
 
 @media (max-width: 700px) {
-  .manual-task-form {
+  .goal-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-dropdown-button {
+    width: 100%;
+  }
+
+  .task-row {
+    flex-direction: column;
+  }
+
+  .task-meta {
+    justify-content: flex-start;
+  }
+}
+
+.add-task-button {
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #2563eb;
+  color: white;
+
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.add-task-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+
+/* ========================= */
+/* ADD TASK MODAL OVERLAY */
+/* ========================= */
+
+.task-modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  padding: 48px 24px;
+
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+
+  z-index: 1200;
+
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+
+/* ========================= */
+/* ADD TASK MODAL BOX */
+/* ========================= */
+
+.task-modal {
+  width: 100%;
+  max-width: 560px;
+
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+
+  animation: taskModalFadeIn 0.2s ease;
+}
+
+
+/* ========================= */
+/* ADD TASK FORM */
+/* ========================= */
+
+.task-modal-form {
+  width: 100%;
+  max-width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+
+  box-sizing: border-box;
+}
+
+.task-modal-form * {
+  box-sizing: border-box;
+}
+
+
+/* ========================= */
+/* ADD TASK MODAL HEADER */
+/* ========================= */
+
+.task-modal-header {
+  margin-bottom: 4px;
+}
+
+.task-modal-header h2 {
+  margin: 0;
+
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.task-modal-header p {
+  margin: 6px 0 0;
+
+  font-size: 14px;
+  color: #6b7280;
+}
+
+
+/* ========================= */
+/* ADD TASK FORM FIELDS */
+/* ========================= */
+
+.task-form-field {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-form-field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.task-form-field input,
+.task-form-field select {
+  width: 100%;
+  max-width: 100%;
+  height: 44px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  font-size: 14px;
+  color: #111827;
+  background-color: white;
+
+  outline: none;
+}
+
+.task-form-field input:focus,
+.task-form-field select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+
+/* ========================= */
+/* TWO COLUMN FORM ROW */
+/* ========================= */
+
+.task-form-row {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+
+/* ========================= */
+/* ADD TASK MODAL BUTTONS */
+/* ========================= */
+
+.task-modal-actions {
+  width: 100%;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 8px;
+}
+
+.task-cancel-button,
+.task-submit-button {
+  width: auto;
+  min-width: 100px;
+  height: 44px;
+
+  padding: 0 16px;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.task-cancel-button {
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+}
+
+.task-cancel-button:hover {
+  background-color: #f3f4f6;
+}
+
+.task-submit-button {
+  border: none;
+  background-color: #2563eb;
+  color: white;
+}
+
+.task-submit-button:hover {
+  background-color: #1d4ed8;
+}
+
+
+/* ========================= */
+/* ADD TASK MODAL ANIMATION */
+/* ========================= */
+
+@keyframes taskModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* ========================= */
+/* ADD TASK MODAL RESPONSIVE */
+/* ========================= */
+
+@media (max-width: 600px) {
+  .task-modal-overlay {
+    align-items: flex-start;
+    padding: 24px 16px;
+  }
+
+  .task-modal {
+    padding: 22px;
+  }
+
+  .task-form-row {
     grid-template-columns: 1fr;
+  }
+
+  .task-modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .task-cancel-button,
+  .task-submit-button {
+    width: 100%;
+  }
+}
+
+/* ===================================== */
+/* FIXED ADD TASK MODAL - OVERRIDE */
+/* Put this at the VERY BOTTOM of goals.css */
+/* ===================================== */
+
+.task-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+
+  padding: 40px 24px !important;
+
+  background-color: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(4px) !important;
+
+  z-index: 9999 !important;
+
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.task-modal {
+  width: 100% !important;
+  max-width: 560px !important;
+
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+
+  margin: 0 auto !important;
+  padding: 28px !important;
+
+  background-color: #ffffff !important;
+  border-radius: 18px !important;
+
+  overflow: visible !important;
+  box-sizing: border-box !important;
+
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28) !important;
+
+  animation: taskModalFadeIn 0.2s ease;
+}
+
+.task-modal-form {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 16px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+.task-modal-form * {
+  box-sizing: border-box !important;
+}
+
+.task-modal-header {
+  width: 100% !important;
+  margin: 0 0 4px 0 !important;
+  padding: 0 !important;
+}
+
+.task-modal-header h2 {
+  margin: 0 !important;
+
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+}
+
+.task-modal-header p {
+  margin: 6px 0 0 !important;
+
+  font-size: 14px !important;
+  color: #6b7280 !important;
+}
+
+.task-form-field {
+  width: 100% !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.task-form-field label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+}
+
+.task-form-field input,
+.task-form-field select {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+
+  padding: 0 12px !important;
+
+  border: 1px solid #d1d5db !important;
+  border-radius: 10px !important;
+
+  font-size: 14px !important;
+  color: #111827 !important;
+  background-color: #ffffff !important;
+
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.task-form-field input:focus,
+.task-form-field select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.task-modal-actions {
+  width: 100% !important;
+
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 12px !important;
+
+  margin-top: 8px !important;
+  padding: 0 !important;
+}
+
+.task-cancel-button,
+.task-submit-button {
+  width: auto !important;
+  min-width: 100px !important;
+
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+
+  padding: 0 16px !important;
+
+  border-radius: 10px !important;
+
+  font-size: 14px !important;
+  font-weight: 600 !important;
+
+  cursor: pointer !important;
+  transition: 0.2s ease !important;
+}
+
+.task-cancel-button {
+  border: 1px solid #d1d5db !important;
+  background-color: #ffffff !important;
+  color: #374151 !important;
+}
+
+.task-cancel-button:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.task-submit-button {
+  border: none !important;
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.task-submit-button:hover {
+  background-color: #1d4ed8 !important;
+}
+
+@keyframes taskModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .task-modal-overlay {
+    padding: 20px 16px !important;
+  }
+
+  .task-modal {
+    padding: 22px !important;
+  }
+
+  .task-modal-actions {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+  }
+
+  .task-cancel-button,
+  .task-submit-button {
+    width: 100% !important;
   }
 }

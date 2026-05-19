@@ -8,6 +8,11 @@ export default function Goals() {
   const [title, setTitle] = useState('');
   const [deadline, setDeadline] = useState('');
   const [taskForms, setTaskForms] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [activeTaskGoalId, setActiveTaskGoalId] = useState(null);
+  const [activeAIGoalId, setActiveAIGoalId] = useState(null);
+  const [expandedGoals, setExpandedGoals] = useState({});
+  const [goalTasks, setGoalTasks] = useState({});
 
   const weekStart = '2026-05-11';
 
@@ -42,7 +47,15 @@ export default function Goals() {
         source: 'manual',
       });
 
-      console.log('Manual task created:', createdTask);
+      setGoalTasks((prev) => ({
+        ...prev,
+        [goalId]: [...(prev[goalId] || []), createdTask],
+      }));
+
+      setExpandedGoals((prev) => ({
+        ...prev,
+        [goalId]: true,
+      }));
 
       setTaskForms((prev) => ({
         ...prev,
@@ -54,15 +67,47 @@ export default function Goals() {
           planned_slot: 'evening',
         },
       }));
+
+      setActiveTaskGoalId(null);
     } catch (err) {
       console.error('Failed to create task:', err);
       alert(err.message);
     }
   }  
 
+  async function fetchTasksForGoal(goalId) {
+    try {
+      const tasks = await api.get(`/goals/${goalId}/tasks`)
+
+      setGoalTasks((prev) => ({
+        ...prev,
+        [goalId]: tasks,
+      }));
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+    }
+  }
 
   useEffect(() => {
-    api.get('/goals').then(setGoals);
+    async function loadGoalsAndTasks() {
+      try {
+        const goalsData = await api.get('/goals');
+        setGoals(goalsData);
+
+        const taskResults = await Promise.all(
+          goalsData.map(async (goal) => {
+            const tasks = await api.get(`/goals/${goal.id}/tasks`);
+            return [goal.id, tasks];
+          })
+        );
+
+        setGoalTasks(Object.fromEntries(taskResults));
+      } catch (err) {
+        console.error('Failed to load goals and tasks:', err);
+      }
+    }
+
+    loadGoalsAndTasks();
   }, []);
  
   async function handleCreate(e) {
@@ -77,6 +122,7 @@ export default function Goals() {
     setGoals([newGoal, ...goals]);
     setTitle('');
     setDeadline('');
+    setShowModal(false);
     } catch (err) {
       console.error('Failed to create goal:', err);
       alert(err.message)
@@ -90,7 +136,23 @@ export default function Goals() {
   }
 
   function handleAcceptedTask(createdTask) {
-    console.log('Accepted task:', createdTask)
+    setGoalTasks((prev) => ({
+      ...prev,
+      [createdTask.goal_id]: [...(prev[createdTask.goal_id] || []), createdTask],
+    }));
+
+    setExpandedGoals((prev) => ({
+      ...prev,
+      [createdTask.goal_id]: true,
+    }));
+  }
+
+
+  function toggleGoalTasks(goalId) {
+    setExpandedGoals((prev) => ({
+      ...prev,
+      [goalId]: !prev[goalId],
+    }));
   }
   
   return (
@@ -99,21 +161,51 @@ export default function Goals() {
         <h1>Goals</h1>
         <p>Manage your learning goals and generate AI task breakdowns.</p>
       </div>
+      <button className="add-goal-button" onClick={() => setShowModal(true)}>Add Goal</button>
 
-      <form className="goal-form" onSubmit={handleCreate}>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Goal baru..."
-          required
-        />
-        <input
-          type="date"
-          value={deadline}
-          onChange={(e) => setDeadline(e.target.value)}
-        />
-        <button type="submit">Tambah</button>
-      </form>
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="goal-modal">
+            <div className="goal-modal-header">
+              <h2>Add New Goal</h2>
+              <p>Create a new learning goal and set an optional deadline.</p>
+            </div>
+            <form className="goal-modal-form" onSubmit={handleCreate}>
+              <div className="form-field">
+                <label>Goal Title</label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Goal baru..."
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Deadline</label>
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="primary-button">
+                  Add Goal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {!goals.length && (
         <div className="empty-goals">
@@ -125,95 +217,192 @@ export default function Goals() {
         {goals.map((goal) => (
           <li className="goal-card" key={goal.id}>
             <div className="goal-card-header">
-              <p className="goal-title">{goal.title}</p>
+              <div>
+                <p className="goal-title">{goal.title}</p>
 
-              {goal.deadline && (
                 <span className="goal-deadline">
                   Deadline: {formatDate(goal.deadline)}
                 </span>
-              )}
+              </div>
+
+              <div className="goal-action-buttons">
+                <button 
+                  type="button"
+                  className="add-task-button"
+                  onClick={() => setActiveTaskGoalId(goal.id)}
+                >
+                  +
+                </button>
+
+                <button
+                  type="button"
+                  className="ai-popup-button"
+                  onClick={() => setActiveAIGoalId(goal.id)}
+                >
+                  AI
+                </button>
+
+                <button
+                  type="button"
+                  className="task-dropdown-button"
+                  onClick={() => toggleGoalTasks(goal.id)}
+                >
+                  {expandedGoals[goal.id] ? 'Hide Tasks' : 'Show Tasks'}
+                </button>
+              </div>
             </div>
 
-            <form
-              className="manual-task-form"
-              onSubmit={(e) => handleCreateTask(e, goal.id)}
-            >
-              <h4>Add Manual Task</h4>
+            {expandedGoals[goal.id] && (
+              <div className="tasks-dropdown">
+                {goalTasks[goal.id]?.length ? (
+                  <ul className="task-list">
+                    {goalTasks[goal.id].map((task) => (
+                      <li className="task-row" key={task.id}>
+                        <div>
+                          <p className="task-title">{task.title}</p>
 
-              <div className="form-field">
-                <label>Task Title</label>
-                <input
-                  type="text"
-                  placeholder="Example: Study React state"
-                  value={taskForms[goal.id]?.title || ''}
-                  onChange={(e) =>
-                    handleTaskFormChange(goal.id, 'title', e.target.value)
-                  }
-                  required
-                />
+                          {task.description && (
+                            <p className="task-description">{task.description}</p>
+                          )}
+                        </div>
+
+                        <div className="task-meta">
+                          <span>{formatDate(task.planned_date)}</span>
+                          <span>{task.planned_slot}</span>
+                          <span>{task.duration_estimate} min</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-tasks-message">No tasks added yet.</p>
+                )}
               </div>
+            )}
+              
+            {activeTaskGoalId === goal.id && (
+              <div className="task-modal-overlay">
+                <div className="task-modal">
+                  <form
+                    className="task-modal-form"
+                    onSubmit={(e) => handleCreateTask(e, goal.id)}
+                  >
+                    <div className="task-modal-header">
+                      <h2>Add Manual Task</h2>
+                      <p>Add a task for: {goal.title}</p>
+                    </div>
 
-              <div className="form-field">
-                <label>Description</label>
-                <input
-                  type="text"
-                  placeholder="Example: Practice useState and forms"
-                  value={taskForms[goal.id]?.description || ''}
-                  onChange={(e) =>
-                    handleTaskFormChange(goal.id, 'description', e.target.value)
-                  }
-                />
+                    <div className="task-form-field">
+                      <label>Task Title</label>
+                      <input
+                        type="text"
+                        placeholder="Example: Study React state"
+                        value={taskForms[goal.id]?.title || ''}
+                        onChange={(e) =>
+                          handleTaskFormChange(goal.id, 'title', e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="task-form-field">
+                      <label>Description</label>
+                      <input
+                        type="text"
+                        placeholder="Example: Practice useState and forms"
+                        value={taskForms[goal.id]?.description || ''}
+                        onChange={(e) =>
+                          handleTaskFormChange(goal.id, 'description', e.target.value)
+                        }
+                      />
+                    </div>
+
+                    <div className="task-form-field">
+                      <label>Duration</label>
+                      <input
+                        type="number"
+                        min="25"
+                        max="90"
+                        placeholder="45"
+                        value={taskForms[goal.id]?.duration_estimate || 45}
+                        onChange={(e) =>
+                          handleTaskFormChange(goal.id, 'duration_estimate', e.target.value)
+                        }
+                        />
+                    </div>
+
+                    <div className="task-form-field">
+                      <label>Planned Date</label>
+                      <input
+                        type="date"
+                        value={taskForms[goal.id]?.planned_date || ''}
+                        onChange={(e) =>
+                          handleTaskFormChange(goal.id, 'planned_date', e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="task-form-field">
+                      <label>Preferred Slot</label>
+                      <select
+                        value={taskForms[goal.id]?.planned_slot || 'evening'}
+                        onChange={(e) =>
+                        handleTaskFormChange(goal.id, 'planned_slot', e.target.value)
+                        }
+                      >
+                        <option value="morning">Morning</option>
+                        <option value="afternoon">Afternoon</option>
+                        <option value="evening">Evening</option>
+                      </select>
+                    </div>
+                    
+                    <div className="task-modal-actions">
+                      <button
+                        type="button"
+                        className="task-cancel-button"
+                        onClick={() => setActiveTaskGoalId(null)}
+                      >
+                        Cancel
+                      </button>
+
+                      <button type="submit" 
+                      className="task-submit-button"
+                      >
+                        Add Task
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
+            )}
 
-              <div className="form-field">
-                <label>Duration</label>
-                <input
-                  type="number"
-                  min="25"
-                  max="90"
-                  placeholder="45"
-                  value={taskForms[goal.id]?.duration_estimate || 45}
-                  onChange={(e) =>
-                    handleTaskFormChange(goal.id, 'duration_estimate', e.target.value)
-                  }
+            {activeAIGoalId === goal.id && (
+              <div className="ai-modal-overlay">
+                <div className="ai-modal">
+                  <div className="ai-modal-header">
+                    <div>
+                      <h2>AI Task Suggestions</h2>
+                      <p>Generate task breakdowns for: {goal.title}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="ai-modal-close"
+                      onClick={() => setActiveAIGoalId(null)}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <AISuggestionPanel
+                    goalId={goal.id}
+                    weekStart={weekStart}
+                    onAccept={handleAcceptedTask}
                   />
+                </div>
               </div>
-
-              <div className="form-field">
-                <label>Planned Date</label>
-                <input
-                  type="date"
-                  value={taskForms[goal.id]?.planned_date || ''}
-                  onChange={(e) =>
-                    handleTaskFormChange(goal.id, 'planned_date', e.target.value)
-                  }
-                  required
-                />
-              </div>
-
-              <div className="form-field">
-                <label>Preferred Slot</label>
-                <select
-                  value={taskForms[goal.id]?.planned_slot || 'evening'}
-                  onChange={(e) =>
-                    handleTaskFormChange(goal.id, 'planned_slot', e.target.value)
-                  }
-                >
-                  <option value="morning">Morning</option>
-                  <option value="afternoon">Afternoon</option>
-                  <option value="evening">Evening</option>
-                  <option value="night">Night</option>
-                </select>
-              </div>
-
-              <button type="submit">Add Task</button>
-            </form>
-
-            <AISuggestionPanel
-              goalId={goal.id}
-              weekStart={weekStart}
-              onAccept={handleAcceptedTask}
-            />
+            )}
           </li>
         ))}
       </ul>

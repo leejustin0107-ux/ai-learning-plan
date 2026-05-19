@@ -33,7 +33,7 @@ router.post('/tasks', authenticate, async (req, res, next) => {
     return res.status(404).json({error: 'Goal not found'});
   }
 
-  const task = Task.create(data);
+  const task = await Task.create(data);
 
   logger.info({
     request_id: req.requestId,
@@ -43,6 +43,35 @@ router.post('/tasks', authenticate, async (req, res, next) => {
   });
 
   res.status(201).json(task)
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+router.get('/goals/:goalId/tasks', authenticate, async (req, res, next) => {
+  try {
+    const goalCheck = await db.query(
+      `SELECT id 
+      FROM goals
+      WHERE id = $1 AND user_id = $2`,
+      [req.params.goalId, req.user.id]
+    );
+
+    if (goalCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Goal not found'});
+    }
+
+    const tasks = await db.query(
+      `SELECT id, goal_id, title, description, duration_estimate,
+              planned_date, planned_slot, source, rationale, status, created_at
+       FROM tasks
+       WHERE goal_id = $1
+       ORDER BY planned_date ASC, created_at ASC`,
+      [req.params.goalId]
+    );
+
+    res.json(tasks.rows);
   } catch (err) {
     next(err);
   }
