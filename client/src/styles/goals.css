@@ -21,6 +21,63 @@
   font-size: 15px;
 }
 
+.goals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.goal-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.goal-status-bar {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.goal-status-bar.ongoing {
+  background-color: #9ca3af;
+}
+
+.goal-status-bar.overdue {
+  background-color: #ef4444;
+}
+
+.goal-status-bar.finished {
+  background-color: #22c55e;
+}
+
+.status-badge {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.status-badge.ongoing {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.status-badge.overdue {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-badge.finished {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
 .goal-modal-form {
   width: 100%;
 
@@ -650,6 +707,23 @@
   border-radius: 12px;
   background-color: white;
   border: 1px solid #e5e7eb;
+  border-left: 6px solid #9ca3af;
+}
+
+.task-row > div:first-child {
+  flex: 1;
+}
+
+.task-row.ongoing {
+  border-left-color: #9ca3af;
+}
+
+.task-row.overdue {
+  border-left-color: #ef4444;
+}
+
+.task-row.finished {
+  border-left-color: #22c55e;
 }
 
 .task-title {
@@ -984,6 +1058,84 @@
   .task-submit-button {
     width: 100%;
   }
+}
+
+.delete-button {
+  height: 36px;
+  padding: 0 12px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #fee2e2;
+  color: #b91c1c;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.delete-button:hover {
+  background-color: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.delete-button:active {
+  transform: translateY(0);
+}
+
+.done-button {
+  height: 36px;
+  padding: 0 12px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #dcfce7;
+  color: #15803d;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.done-button:hover {
+  background-color: #22c55e;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.reschedule-button {
+  height: 36px;
+  padding: 0 12px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #fee2e2;
+  color: #b91c1c;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.finished-label {
+  padding: 8px 12px;
+
+  border-radius: 10px;
+
+  background-color: #dcfce7;
+  color: #15803d;
+
+  font-size: 14px;
+  font-weight: 700;
 }
 
 /* ===================================== */

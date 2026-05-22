@@ -77,4 +77,54 @@ router.get('/goals/:goalId/tasks', authenticate, async (req, res, next) => {
   }
 });
 
+router.patch('/tasks/:taskId/status', authenticate, async (req, res, next) => {
+  try {
+    const result = await db.query(
+      `UPDATE tasks t
+      SET status = 'done',
+          completed_at = NOW()
+      FROM goals g
+      WHERE t.goal_id = g.id
+      AND t.id = $1
+      AND g.user_id = $2
+      RETURNING t.*`, [
+        req.params.taskId, req.user.id
+      ]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({error: 'Task not found'});
+    }
+
+    res.json({task: result.rows[0]});
+  } catch (err) {
+    next(err);
+  }
+})
+
+router.delete('/tasks/:taskId', authenticate, async (req, res, next) => {
+  try {
+    const result = await db.query(
+      `DELETE 
+      FROM tasks t
+      USING goals g
+      WHERE t.goal_id = g.id 
+      AND t.id = $1
+      AND g.user_id = $2
+      RETURNING t.id`, [
+        req.params.taskId, req.user.id,
+      ]
+    );
+
+    if(!result.rows.length) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    res.status(204).end();
+  } catch (err) {
+    next (err);
+  }
+}) 
+
+
 module.exports = router;

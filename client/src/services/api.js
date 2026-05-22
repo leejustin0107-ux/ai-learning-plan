@@ -21,6 +21,7 @@ async function request(path, options = {}) {
 
   const text = await res.text();
 
+
   let data = null;
 
   if (text) {

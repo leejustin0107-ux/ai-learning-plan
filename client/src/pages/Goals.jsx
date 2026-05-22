@@ -155,6 +155,101 @@ export default function Goals() {
     }));
   }
   
+  async function handleDeleteGoal(goalId) {
+    const confirmed = window.confirm('Are you sure you want to delete this goal?');
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/goals/${goalId}`);
+
+      setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
+
+      setGoalTasks((prev) => {
+        const updated = { ...prev };
+        delete updated[goalId];
+        return updated;
+      });
+    } catch (err) {
+      console.error('failed to delete goal:', err);
+      alert(err.message);
+    }
+  }
+
+  async function handleDeleteTask(taskId) {
+    const confirmed = window.confirm('Are you sure you want to delete this task?');
+
+    if (!confirmed) return;
+
+    try{
+      await api.delete(`/tasks/${taskId}`);
+
+      setGoalTasks((prev) => {
+        const updated = {};
+
+        for (const goalId in prev) {
+          updated[goalId] = prev[goalId].filter((task) => task.id !== taskId);
+        }
+
+        return updated
+      });
+    } catch (err) {
+    console.error('failed to delete task:', err);
+    alert(err.message);
+    } 
+  }
+
+  function getGoalStatus(goal) {
+    if (goal.status === 'done' || goal.status === 'finished') {
+      return 'finished';
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    if (goal.deadline && goal.deadline < today) {
+      return 'overdue';
+    }
+
+    return 'ongoing';
+  }
+
+  function getTaskStatus(task) {
+    if (task.status === 'done' || task.status === 'finished') {
+      return 'finished';
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    if (task.planned_date && task.planned_date < today) {
+      return 'overdue';
+    }
+
+    return 'ongoing';
+  }
+
+  async function handleMarkTaskDone(taskId) {
+    try {
+      const data = await api.patch(`/tasks/${taskId}/status`);
+
+      const updatedTask = data.task;
+
+      setGoalTasks((prev) => {
+        const updated = {};
+
+        for (const goalId in prev) {
+          updated[goalId] = prev[goalId].map((task) => 
+            task.id === taskId ? updatedTask : task
+          );
+        }
+
+        return updated;
+      });
+    } catch (err) {
+      console.error('failed to mark task as done:', err);
+      alert(err.message);
+    }
+  }
+
   return (
     <div className="goals-page">
       <div className="goals-header">
@@ -216,6 +311,8 @@ export default function Goals() {
       <ul className="goals-list">
         {goals.map((goal) => (
           <li className="goal-card" key={goal.id}>
+            <div className={`goal-status-bar ${getGoalStatus(goal)}`}></div>
+
             <div className="goal-card-header">
               <div>
                 <p className="goal-title">{goal.title}</p>
@@ -224,6 +321,10 @@ export default function Goals() {
                   Deadline: {formatDate(goal.deadline)}
                 </span>
               </div>
+
+              <span className={`status-badge ${getGoalStatus(goal)}`}>
+                {getGoalStatus(goal)}
+              </span>
 
               <div className="goal-action-buttons">
                 <button 
@@ -244,6 +345,14 @@ export default function Goals() {
 
                 <button
                   type="button"
+                  className="delete-button"
+                  onClick={() => handleDeleteGoal(goal.id)}
+                >
+                  Delete
+                </button>
+
+                <button
+                  type="button"
                   className="task-dropdown-button"
                   onClick={() => toggleGoalTasks(goal.id)}
                 >
@@ -257,7 +366,7 @@ export default function Goals() {
                 {goalTasks[goal.id]?.length ? (
                   <ul className="task-list">
                     {goalTasks[goal.id].map((task) => (
-                      <li className="task-row" key={task.id}>
+                      <li className={`task-row ${getTaskStatus(task)}`} key={task.id}>
                         <div>
                           <p className="task-title">{task.title}</p>
 
@@ -270,6 +379,37 @@ export default function Goals() {
                           <span>{formatDate(task.planned_date)}</span>
                           <span>{task.planned_slot}</span>
                           <span>{task.duration_estimate} min</span>
+                          <span className={`status-badge ${getTaskStatus(task)}`}>
+                            {getTaskStatus(task)}
+                          </span>
+                        </div>
+                        <div>
+                          {getTaskStatus(task) === 'overdue' ? (
+                            <button 
+                              type="button" 
+                              className="reschedule-button"
+                            >
+                              Reschedule
+                            </button>
+                          ) : getTaskStatus(task) === 'finished' ? (
+                            <span className="finished-label">Done</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="done-button"
+                              onClick={() => handleMarkTaskDone(task.id)}
+                            >
+                              Mark as Done
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            className="delete-button"
+                            onClick={() => handleDeleteTask(task.id)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       </li>
                     ))}
