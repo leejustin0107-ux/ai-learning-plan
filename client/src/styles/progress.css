@@ -1,0 +1,148 @@
+.progress-page {
+  padding: 32px;
+}
+
+.progress-page h1 {
+  margin-bottom: 6px;
+  color: #111827;
+}
+
+.progress-page > p {
+  margin-bottom: 24px;
+  color: #6b7280;
+}
+
+.progress-week-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.progress-week-controls button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+
+  background-color: #eef2ff;
+  color: #3730a3;
+
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.progress-week-controls button:hover {
+  background-color: #c7d2fe;
+}
+
+.progress-week-controls input {
+  height: 40px;
+  width: 130px;
+
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+
+  font-weight: 700;
+  color: #111827;
+}
+
+.progress-dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.progress-summary-card,
+.progress-main-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.progress-summary-card {
+  padding: 20px;
+}
+
+.progress-label {
+  display: block;
+  margin-bottom: 10px;
+
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.progress-summary-card strong {
+  color: #111827;
+  font-size: 28px;
+}
+
+.progress-main-card {
+  grid-column: 1 / -1;
+  padding: 24px;
+}
+
+.progress-main-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.progress-main-header h2 {
+  margin: 0 0 6px;
+  color: #111827;
+}
+
+.progress-main-header p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.progress-percent {
+  font-size: 36px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.progress-bar {
+  height: 16px;
+  overflow: hidden;
+
+  border-radius: 999px;
+  background-color: #e5e7eb;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background-color: #22c55e;
+  transition: width 0.3s ease;
+}
+
+.progress-detail-row {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 12px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .progress-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-main-card {
+    grid-column: auto;
+  }
+
+  .progress-week-controls {
+    flex-wrap: wrap;
+  }
+}

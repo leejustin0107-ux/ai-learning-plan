@@ -3,6 +3,7 @@ const router = express.Router();
 const { z } = require('zod');
 const db = require('../utils/db');
 const authenticate = require('../middleware/authenticate');
+const { recalculateProgress } = require('../services/progress');
  
 const GoalInput = z.object({
   title: z.string().min(1).max(255),
@@ -55,11 +56,32 @@ router.patch('/:id', authenticate, async (req, res, next) => {
 // Delete
 router.delete('/:id', authenticate, async (req, res, next) => {
   try {
+    // 1. Get all planned dates from tasks under this goal before deleting
+    const taskDatesResult = await db.query(
+      `SELECT DISTINCT planned_date
+       FROM tasks
+       WHERE goal_id = $1
+       AND planned_date IS NOT NULL`,
+      [req.params.id]
+    );
+
+    // 2. Delete the goal only if it belongs to the user
     const result = await db.query(
-      'DELETE FROM goals WHERE id = $1 AND user_id = $2 RETURNING id',
+      `DELETE FROM goals
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
       [req.params.id, req.user.id]
     );
-    if (!result.rows.length) return res.status(404).json({ error: 'Goal not found' });
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'Goal not found' });
+    }
+
+    // 3. Recalculate progress for affected weeks
+    for (const row of taskDatesResult.rows) {
+      await recalculateProgress(req.user.id, row.planned_date);
+    }
+
     res.status(204).end();
   } catch (err) {
     next(err);

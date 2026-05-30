@@ -1138,6 +1138,45 @@
   font-weight: 700;
 }
 
+.task-row {
+  flex-direction: column;
+}
+
+.task-row-main {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.goal-reschedule-suggestion {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+
+  border-radius: 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.goal-reschedule-suggestion h4 {
+  margin: 0 0 10px;
+  color: #111827;
+}
+
+.goal-reschedule-suggestion p {
+  margin: 6px 0;
+  color: #4b5563;
+}
+
+.reschedule-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 /* ===================================== */
 /* FIXED ADD TASK MODAL - OVERRIDE */
 /* Put this at the VERY BOTTOM of goals.css */

@@ -21,6 +21,21 @@ const SuggestionSchema = z.object({
   summary: z.string(),
 });
 
+const RescheduleSchema = z.object({
+  task_id: z.string().min(1),
+  suggested_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  suggested_slot: z.enum(['morning', 'afternoon', 'evening']),
+  reason: z.string().min(1),
+});
+
+function sanitizeContext(context) {
+  const sanitized = JSON.parse(JSON.stringify(context));
+  delete sanitized.email;
+  delete sanitized.name;
+  delete sanitized.phone;
+  return sanitized;
+}
+
 // Validasi output AI — return null jika tidak valid
 function validateAIOutput(raw) {
   try {
@@ -41,6 +56,33 @@ function validateAIOutput(raw) {
   }
 }
 
+function validateRescheduleOutput(raw, allowedTaskIds = []) {
+  try {
+    let cleaned = raw.trim();
+
+    cleaned = cleaned
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```$/i, '')
+      .trim();
+
+    const parsed = JSON.parse(cleaned);
+    const validated = RescheduleSchema.parse(parsed);
+
+    if (
+      allowedTaskIds.length > 0 &&
+      !allowedTaskIds.includes(validated.task_id)
+    ) {
+      return null;
+    }
+
+    return validated;
+  } catch (error) {
+    console.error('AI reschedule validation failed:', error.message);
+    return null;
+  }
+}
+
 // Load system prompt dari file
 function loadSystemPrompt() {
   return fs.readFileSync(
@@ -54,12 +96,61 @@ const genAI = new GoogleGenerativeAI(config.geminiKey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 async function callLLMReal(type, context) {
   const systemPrompt = loadSystemPrompt();
-  const userPrompt = `Type: ${type}\nContext: ${JSON.stringify(context)}`;
+  const safeContext = sanitizeContext(context);
+
+  let userPrompt;
+
+  if (type === 'reschedule') {
+    userPrompt = `
+Type: reschedule
+
+You are helping the user reschedule an overdue task.
+
+Rules:
+- Return only valid JSON.
+- Do not include markdown.
+- Do not include explanation outside JSON.
+- suggested_slot must be one of: morning, afternoon, evening.
+- suggested_date must be today or later.
+- Avoid slots that already have many tasks.
+- Consider user availability, preferred time, and remaining weekly capacity.
+
+Context:
+${JSON.stringify(context, null, 2)}
+
+Return exactly this JSON format:
+{
+  "task_id": "task id from overdue_tasks",
+  "suggested_date": "YYYY-MM-DD",
+  "suggested_slot": "morning",
+  "reason": "short reason"
+}
+`;
+  } else {
+    userPrompt = `Type: ${type}\nContext: ${JSON.stringify(safeContext)}`;
+  }
+
   const result = await model.generateContent([systemPrompt, userPrompt]);
   return result.response.text();
 }
+
+
 // Mock mode — hemat API quota, respons instan
 async function callLLMMock(type, context) {
+  const safeContext = sanitizeContext(context);
+
+  if (type === 'reschedule') {
+    const task = context.overdue_tasks?.[0];
+
+    return JSON.stringify({
+      task_id: task?.id,
+      suggested_date: safeContext.today,
+      suggested_slot: 'morning',
+      reason:
+        'This overdue task is moved to the earliest available slot based on the current week schedule.',
+    });
+  }
+
   return JSON.stringify({
     tasks: [
       {
@@ -75,4 +166,6 @@ async function callLLMMock(type, context) {
   });
 }
 const callLLM = config.llmProvider === 'mock' ? callLLMMock : callLLMReal;
-module.exports = { callLLM, validateAIOutput, SuggestionSchema, TaskSchema };
+
+
+module.exports = { callLLM, validateAIOutput, validateRescheduleOutput, SuggestionSchema, TaskSchema, RescheduleSchema, };

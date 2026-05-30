@@ -13,6 +13,8 @@ export default function Goals() {
   const [activeAIGoalId, setActiveAIGoalId] = useState(null);
   const [expandedGoals, setExpandedGoals] = useState({});
   const [goalTasks, setGoalTasks] = useState({});
+  const [rescheduleSuggestions, setRescheduleSuggestions] = useState({});
+  const [reschedulingTaskId, setReschedulingTaskId] = useState(null);
 
   const weekStart = '2026-05-11';
 
@@ -204,9 +206,9 @@ export default function Goals() {
       return 'finished';
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDate(new Date());
 
-    if (goal.deadline && goal.deadline < today) {
+    if (goal.deadline < today) {
       return 'overdue';
     }
 
@@ -218,9 +220,33 @@ export default function Goals() {
       return 'finished';
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const taskDate = getTaskDateString(task);
 
-    if (task.planned_date && task.planned_date < today) {
+    if (!taskDate) {
+      return 'ongoing';
+    }
+
+    const today = formatLocalDate(new Date());
+
+    if (taskDate < today) {
+      return 'overdue';
+    }
+
+    if (taskDate > today) {
+      return 'ongoing';
+    }
+
+    const currentHour = new Date().getHours();
+
+    const slotEndHour = {
+      morning: 12,
+      afternoon: 17,
+      evening: 24,
+    };
+
+    const taskSlotEndHour = slotEndHour[task.planned_slot];
+
+    if (taskSlotEndHour && currentHour >= taskSlotEndHour) {
       return 'overdue';
     }
 
@@ -248,6 +274,97 @@ export default function Goals() {
       console.error('failed to mark task as done:', err);
       alert(err.message);
     }
+  }
+
+  function formatLocalDate(date) {
+    const d = new Date(date);
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function getTaskDateString(task) {
+    if (!task.planned_date) return null;
+
+    if (
+      typeof task.planned_date === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(task.planned_date)
+    ) {
+      return task.planned_date;
+    }
+    return formatLocalDate(task.planned_date);
+  }
+
+  async function handleRescheduleTask(taskId) {
+    try {
+      setReschedulingTaskId(taskId);
+
+      setRescheduleSuggestions((prev) => ({
+        ...prev,
+        [taskId]: null,
+      }));
+
+      const data = await api.post('/ai/plan/reschedule', {
+        task_ids: [taskId],
+      });
+
+      setRescheduleSuggestions((prev) => ({
+        ...prev,
+        [taskId]: data.recommendation,
+      }));
+    } catch (err) {
+      console.error('failed to reschedule task:', err);
+      alert(err.message);
+    } finally {
+      setReschedulingTaskId(null);
+    }
+  }
+
+  async function handleAcceptReschedule(taskId) {
+    const suggestion = rescheduleSuggestions[taskId];
+
+    if (!suggestion) return;
+
+    try {
+      const data = await api.patch(`/tasks/${taskId}/schedule`, {
+        planned_date: suggestion.suggested_date,
+        planned_slot: suggestion.suggested_slot,
+      });
+
+      const updatedTask = data.task;
+
+      setGoalTasks((prev) => {
+        const updated = {};
+
+        for (const goalId in prev) {
+          updated[goalId] = prev[goalId].map((task) =>
+            task.id === taskId ? updatedTask : task
+          );
+        }
+
+        return updated;
+      });
+
+      setRescheduleSuggestions((prev) => {
+        const updated = { ...prev };
+        delete updated[taskId];
+        return updated;
+      });
+    } catch (err) {
+      console.error('failed to accept reschedule:', err);
+      alert(err.message);
+    }
+  }
+
+  function handleDeclineReschedule(taskId) {
+    setRescheduleSuggestions((prev) => {
+      const updated = { ...prev };
+      delete updated[taskId];
+      return updated;
+    });
   }
 
   return (
@@ -388,8 +505,10 @@ export default function Goals() {
                             <button 
                               type="button" 
                               className="reschedule-button"
+                              onClick={() => handleRescheduleTask(task.id)}
+                              disabled={reschedulingTaskId === task.id}
                             >
-                              Reschedule
+                              {reschedulingTaskId === task.id ? 'Rescheduling...' : 'Reschedule'}
                             </button>
                           ) : getTaskStatus(task) === 'finished' ? (
                             <span className="finished-label">Done</span>
@@ -411,6 +530,45 @@ export default function Goals() {
                             Delete
                           </button>
                         </div>
+
+                        {rescheduleSuggestions[task.id] && (
+                          <div className="goal-reschedule-suggestion">
+                            <h4>AI Reschedule Suggestion</h4>
+
+                            <p>
+                              <strong>New Date:</strong>{' '}
+                              {rescheduleSuggestions[task.id].suggested_date}
+                            </p>
+
+                            <p>
+                              <strong>New Slot:</strong>{' '}
+                              {rescheduleSuggestions[task.id].suggested_slot}
+                            </p>
+
+                            <p>
+                              <strong>Reason:</strong>{' '}
+                              {rescheduleSuggestions[task.id].reason}
+                            </p>
+
+                            <div className="reschedule-actions">
+                              <button
+                                type="button"
+                                  className="accept-button"
+                                  onClick={() => handleAcceptReschedule(task.id)}
+                              >
+                                Accept
+                              </button>
+
+                              <button
+                                type="button"
+                                className="decline-button"
+                                onClick={() => handleDeclineReschedule(task.id)}
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>

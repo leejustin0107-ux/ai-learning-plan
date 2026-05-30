@@ -8,7 +8,7 @@ export default function MainLayout() {
         <h2>AI Learning Plan</h2>
         <NavLink to="/">Dashboard</NavLink>
         <NavLink to="/goals">Goals</NavLink>
-        <NavLink to="/calendar">Kalender</NavLink>
+        <NavLink to="/calendar">Calendar</NavLink>
         <NavLink to="/progress">Progress</NavLink>
         <NavLink to="/profile">Profile</NavLink>
       </nav>
