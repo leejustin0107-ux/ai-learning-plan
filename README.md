@@ -592,6 +592,8 @@ Contoh response:
 }
 ```
 
+- [Estimasi Biaya Penggunaan AI](docs/ai-cost-estimation.md)
+
 ---
 
 ## Progress
@@ -661,6 +663,7 @@ completion_rate = completed_hours / planned_hours
 Jika tidak ada task pada minggu tersebut, progress akan bernilai 0.
 
 ---
+
 
 ## Architecture Decision Records
 

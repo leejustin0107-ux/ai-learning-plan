@@ -168,4 +168,4 @@ async function callLLMMock(type, context) {
 const callLLM = config.llmProvider === 'mock' ? callLLMMock : callLLMReal;
 
 
-module.exports = { callLLM, validateAIOutput, validateRescheduleOutput, SuggestionSchema, TaskSchema, RescheduleSchema, };
+module.exports = { callLLM, sanitizeContext, validateAIOutput, validateRescheduleOutput, SuggestionSchema, TaskSchema, RescheduleSchema, };
