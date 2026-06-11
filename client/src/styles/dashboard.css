@@ -1,0 +1,264 @@
+.dashboard-page {
+  width: 100%;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+
+  margin-bottom: 28px;
+}
+
+.dashboard-header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dashboard-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-actions button,
+.dashboard-section-header button {
+  height: 40px;
+  padding: 0 16px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #2563eb;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.dashboard-actions button:hover,
+.dashboard-section-header button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  margin-bottom: 24px;
+}
+
+.dashboard-card {
+  padding: 20px;
+  border-radius: 16px;
+
+  background-color: white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-card-label {
+  display: block;
+  margin-bottom: 8px;
+
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-card strong {
+  font-size: 32px;
+  color: #111827;
+}
+
+.dashboard-card.warning strong {
+  color: #dc2626;
+}
+
+.dashboard-progress-card,
+.dashboard-section {
+  margin-bottom: 24px;
+  padding: 22px;
+
+  border-radius: 18px;
+  background-color: white;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-progress-header,
+.dashboard-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  margin-bottom: 16px;
+}
+
+.dashboard-progress-header h2,
+.dashboard-section-header h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: #111827;
+}
+
+.dashboard-progress-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dashboard-progress-percent {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.dashboard-progress-bar {
+  height: 14px;
+  width: 100%;
+
+  overflow: hidden;
+  border-radius: 999px;
+
+  background-color: #e5e7eb;
+}
+
+.dashboard-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+
+  background-color: #2563eb;
+  transition: width 0.25s ease;
+}
+
+.dashboard-progress-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+
+  margin-top: 10px;
+
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dashboard-task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  padding: 14px;
+  border-radius: 12px;
+
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-left: 6px solid #9ca3af;
+}
+
+.dashboard-task-item.ongoing {
+  border-left-color: #9ca3af;
+}
+
+.dashboard-task-item.overdue {
+  border-left-color: #ef4444;
+}
+
+.dashboard-task-item.finished {
+  border-left-color: #22c55e;
+}
+
+.dashboard-task-item h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: #111827;
+}
+
+.dashboard-task-item p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.dashboard-task-status {
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  background-color: #eef2ff;
+  color: #3730a3;
+
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.overdue-section .dashboard-task-status {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-page {
+    padding: 24px 16px;
+  }
+
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-progress-header,
+  .dashboard-section-header,
+  .dashboard-task-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-progress-details {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

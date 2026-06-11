@@ -1,11 +1,20 @@
-process.env.LLM_PROVIDER = 'mock';
-process.env.GEMINI_API_KEY = 'test-key';
-
 const {
   sanitizeContext,
   validateAIOutput,
   validateRescheduleOutput,
 } = require('../src/services/llm');
+
+process.env.LLM_PROVIDER = 'mock';
+process.env.GEMINI_API_KEY = 'test-key';
+
+beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  console.error.mockRestore();
+});
+
 
 describe('llm service', () => {
   test('sanitizeContext removes sensitive fields', () => {
@@ -159,6 +168,118 @@ describe('llm service', () => {
     });
 
     const result = validateRescheduleOutput(raw, ['task-123']);
+
+    expect(result).toBeNull();
+  });
+});
+
+describe('validateAIOutput detailed validation', () => {
+  const validTask = {
+    title: 'Study React Hooks',
+    description: 'Learn useState and useEffect',
+    duration_estimate: 45,
+    planned_date: '2026-04-15',
+    planned_slot: 'morning',
+    rationale: 'Morning slot is available, hooks are a React foundation',
+  };
+
+  test('accepts valid output', () => {
+    const input = JSON.stringify({
+      tasks: [validTask],
+      summary: 'This week plan',
+    });
+
+    const result = validateAIOutput(input);
+
+    expect(result).not.toBeNull();
+    expect(result.tasks).toHaveLength(1);
+    expect(result.tasks[0].title).toBe('Study React Hooks');
+  });
+
+  test('rejects duration below minimum 25 minutes', () => {
+    const invalid = JSON.stringify({
+      tasks: [{ ...validTask, duration_estimate: 10 }],
+      summary: 'Test',
+    });
+
+    expect(validateAIOutput(invalid)).toBeNull();
+  });
+
+  test('rejects duration above maximum 90 minutes', () => {
+    const invalid = JSON.stringify({
+      tasks: [{ ...validTask, duration_estimate: 120 }],
+      summary: 'Test',
+    });
+
+    expect(validateAIOutput(invalid)).toBeNull();
+  });
+
+  test('rejects response without rationale', () => {
+    const invalid = JSON.stringify({
+      tasks: [{ ...validTask, rationale: '' }],
+      summary: 'Test',
+    });
+
+    expect(validateAIOutput(invalid)).toBeNull();
+  });
+
+  test('rejects invalid planned_slot', () => {
+    const invalid = JSON.stringify({
+      tasks: [{ ...validTask, planned_slot: 'midnight' }],
+      summary: 'Test',
+    });
+
+    expect(validateAIOutput(invalid)).toBeNull();
+  });
+
+  test('rejects invalid JSON', () => {
+    expect(validateAIOutput('not json')).toBeNull();
+  });
+
+  test('rejects response without tasks', () => {
+    expect(validateAIOutput(JSON.stringify({ summary: 'Test' }))).toBeNull();
+  });
+  test('validateAIOutput accepts JSON wrapped in plain code block', () => {
+  const raw = `
+    \`\`\`
+    {
+      "tasks": [
+        {
+          "title": "Study SQL",
+          "description": "Practice SELECT and JOIN queries",
+          "duration_estimate": 45,
+          "planned_date": "2026-04-15",
+          "planned_slot": "evening",
+          "rationale": "SQL is important for backend development"
+        }
+      ],
+      "summary": "This week plan"
+    }
+    \`\`\`
+    `;
+
+  const result = validateAIOutput(raw);
+
+  expect(result).not.toBeNull();
+  expect(result.tasks[0].title).toBe('Study SQL');
+  });
+
+  test('validateRescheduleOutput accepts valid output without allowedTaskIds restriction', () => {
+    const raw = JSON.stringify({
+      task_id: 'task-999',
+      suggested_date: '2026-04-15',
+      suggested_slot: 'morning',
+      reason: 'Morning has fewer tasks',
+    });
+
+    const result = validateRescheduleOutput(raw);
+
+    expect(result).not.toBeNull();
+    expect(result.task_id).toBe('task-999');
+  });
+
+  test('validateRescheduleOutput rejects invalid JSON', () => {
+    const result = validateRescheduleOutput('not json');
 
     expect(result).toBeNull();
   });

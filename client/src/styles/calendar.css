@@ -284,3 +284,128 @@
 .decline-button:hover {
   background-color: #e5e7eb;
 }
+
+.time-slot:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.time-slot:focus-visible,
+.calendar-task-card:focus-visible,
+.calendar-header button:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.time-slot {
+  height: 120px;
+  min-height: 120px;
+  max-height: 120px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.slot-label {
+  flex-shrink: 0;
+
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.slot-task-list {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.calendar-task-card {
+  width: 100%;
+
+  flex-shrink: 0;
+
+  display: block;
+  text-align: left;
+
+  padding: 10px 12px;
+
+  border: none;
+  border-left: 4px solid #9ca3af;
+  border-radius: 10px;
+
+  background-color: #f3f4f6;
+  color: inherit;
+
+  cursor: pointer;
+  box-sizing: border-box;
+
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.calendar-task-card:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.calendar-task-title {
+  display: block;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-task-duration {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 12px;
+  color: #64748b;
+}
+
+.calendar-task-card.ongoing {
+  border-left-color: #9ca3af;
+}
+
+.calendar-task-card.overdue {
+  border-left-color: #ef4444;
+}
+
+.calendar-task-card.finished {
+  border-left-color: #22c55e;
+}
+
+.slot-task-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.slot-task-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 999px;
+}
+
+.slot-task-list::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.time-slot:focus-visible,
+.calendar-task-card:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}

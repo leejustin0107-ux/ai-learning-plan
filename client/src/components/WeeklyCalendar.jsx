@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import ErrorState from './ErrorState';
+import { PageSkeleton } from './Skeleton';
+
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const SLOTS = ['morning', 'afternoon', 'evening'];
@@ -86,21 +89,25 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
   const [weekStart, setWeekStart] = useState(getMonday());
   const [tasksByDay, setTasksByDay] = useState({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function fetchWeekTasks() {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await api.get(`/tasks?week_start=${weekStart}`);
+      setTasksByDay(data.tasks || {});
+    } catch (err) {
+      console.error('Failed to fetch weekly tasks:', err);
+      setError(err.message);
+      setTasksByDay({});
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchWeekTasks() {
-      try {
-        setLoading(true);
-        const data = await api.get(`/tasks?week_start=${weekStart}`);
-        setTasksByDay(data.tasks || {});
-      } catch (err) {
-        console.error('Failed to fetch weekly tasks:', err);
-        setTasksByDay({});
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchWeekTasks();
   }, [weekStart, refreshKey]);
 
@@ -116,80 +123,122 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
     return formatLocalDate(date);
   }
 
+  const hasTasks = Object.values(tasksByDay).some((tasks) => tasks.length > 0);
+
   if (loading) {
-    return <p className="loading-skeleton">Loading calendar...</p>;
+    return (
+      <div className="weekly-calendar">
+        <PageSkeleton type="calendar" />
+      </div>
+    );
   }
 
   return (
     <div className="weekly-calendar">
       <div className="calendar-header">
-        <button type="button" onClick={() => navigateWeek(-1)}>
-          ← Previous Week
+        <button
+          type="button"
+          onClick={() => navigateWeek(-1)}
+          aria-label="Go to previous week"
+        >
+          ←
         </button>
 
         <h3>Week of {weekStart}</h3>
 
-        <button type="button" onClick={() => navigateWeek(1)}>
-          Next Week →
+        <button
+          type="button"
+          onClick={() => navigateWeek(1)}
+          aria-label="Go to next week"
+        >
+          →
         </button>
       </div>
 
-      <div className="calendar-grid">
-        {DAYS.map((day, dayIndex) => {
-          const dateKey = getDateForDay(dayIndex);
-          const dayTasks = tasksByDay[dateKey] || [];
+      {error ? (
+        <ErrorState message={error} onRetry={fetchWeekTasks} />
+      ) : null}
 
-          return (
-            <div key={day} className="day-column">
-              <div className="day-header">
-                <strong>{day}</strong>
-                <small>{dateKey}</small>
-              </div>
+      {!error && (
+        <div className="calendar-grid">
+          {DAYS.map((day, dayIndex) => {
+            const dateKey = getDateForDay(dayIndex);
+            const dayTasks = tasksByDay[dateKey] || [];
 
-              {SLOTS.map((slot) => {
-                const slotTasks = dayTasks.filter(
-                  (task) => task.planned_slot === slot
-                );
+            return (
+              <div key={day} className="day-column">
+                <div className="day-header">
+                  <strong>{day}</strong>
+                  <small>{dateKey}</small>
+                </div>
 
-                return (
-                  <div
-                    key={slot}
-                    className={`time-slot ${
-                      slotTasks.length ? 'has-tasks' : 'empty'
-                    }`}
-                    onClick={() => {
-                      if (!slotTasks.length) {
-                        onSlotClick?.(dateKey, slot);
+                {SLOTS.map((slot) => {
+                  const slotTasks = dayTasks.filter(
+                    (task) => task.planned_slot === slot
+                  );
+
+                  const isEmptySlot = slotTasks.length === 0;
+
+                  return (
+                    <div
+                      key={slot}
+                      role={isEmptySlot ? 'button' : undefined}
+                      tabIndex={isEmptySlot ? 0 : undefined}
+                      aria-label={
+                        isEmptySlot
+                          ? `${SLOT_LABELS[slot]} ${day} ${dateKey}, empty slot`
+                          : `${SLOT_LABELS[slot]} ${day} ${dateKey}, ${slotTasks.length} tasks`
                       }
-                    }}
-                  >
-                    <span className="slot-label">{SLOT_LABELS[slot]}</span>
+                      className={`time-slot ${
+                        slotTasks.length ? 'has-tasks' : 'empty'
+                      }`}
+                      onKeyDown={(e) => {
+                        if (
+                          isEmptySlot &&
+                          (e.key === 'Enter' || e.key === ' ')
+                        ) {
+                          e.preventDefault();
+                          onSlotClick?.(dateKey, slot);
+                        }
+                      }}
+                      onClick={() => {
+                        if (isEmptySlot) {
+                          onSlotClick?.(dateKey, slot);
+                        }
+                      }}
+                    >
+                      <span className="slot-label">{SLOT_LABELS[slot]}</span>
 
-                    {slotTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`calendar-task-card ${getTaskStatus(task)}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onTaskClick?.(task);
-                        }}
-                      >
-                        <span className="calendar-task-title">
-                          {task.title}
-                        </span>
+                      <div className="slot-task-list">
+                        {slotTasks.map((task) => (
+                          <button
+                            key={task.id}
+                            type="button"
+                            className={`calendar-task-card ${getTaskStatus(task)}`}
+                            aria-label={`Open task "${task.title}", ${task.duration_estimate} minutes`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTaskClick?.(task);
+                            }}
+                          >
+                            <span className="calendar-task-title">
+                              {task.title}
+                            </span>
 
-                        <span className="calendar-task-duration">
-                          {task.duration_estimate}m
-                        </span>
+                            <span className="calendar-task-duration">
+                              {task.duration_estimate}m
+                            </span>
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
-}
+};

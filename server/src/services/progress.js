@@ -37,8 +37,6 @@ async function recalculateProgress(userId, date) {
     RETURNING *`,
     [userId, week, planned_hours, completed_hours, completion_rate]
   );
-
-  console.log('SAVED PROGRESS SNAPSHOT:', saved.rows[0]);
  
   return { week, planned_hours, completed_hours, completion_rate };
 }

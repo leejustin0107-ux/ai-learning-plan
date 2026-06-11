@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { api } from '../services/api';
 import '../styles/aisuggestionpanel.css'
+import ErrorState from './ErrorState';
+import RationaleDisplay from './RationaleDisplay';
  
 function AISuggestionPanel({ goalId, weekStart, onAccept }) {
   const [suggestions, setSuggestions] = useState(null);
@@ -75,10 +77,11 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
 
   if (error) {
     return (
-      <div className="error-state">
-        <p>⚠️ {error}</p>
-
-        <button onClick={fetchSuggestions}>Coba lagi</button>
+      <div className="ai-panel">
+        <ErrorState
+          message={error}
+          onRetry={fetchSuggestions}
+        />
       </div>
     );
   }
@@ -135,14 +138,7 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
 
               <p>{task.description}</p>
 
-              <p className="rationale">
-                <strong>Why:</strong> {task.rationale}
-              </p>
-
-              <p className="meta">
-                {task.duration_estimate} minutes · {task.planned_date} ·{' '}
-                {task.planned_slot}
-              </p>
+              <RationaleDisplay rationale={task.rationale} task={task} />
 
               {isAccepted && (
                 <p className="accepted-message">

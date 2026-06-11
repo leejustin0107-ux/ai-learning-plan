@@ -12,6 +12,7 @@ const tasksRoutes = require('./routes/tasks');
 const progressRoutes = require('./routes/progress');
 
 const app = express();
+app.set('etag', false);
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
@@ -31,6 +32,7 @@ app.use('/api/progress', progressRoutes);
 
 // TODO: Tambahkan error handler di paling akhir (modul Scaffolding)
 app.use(errorHandler);
+
 
 
 module.exports = app;

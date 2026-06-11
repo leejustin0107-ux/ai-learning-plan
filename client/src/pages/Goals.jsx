@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import AISuggestionPanel from '../components/AISuggestionPanel';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
+import { PageSkeleton } from '../components/Skeleton';
 import '../styles/goals.css';
 
 export default function Goals() {
@@ -15,6 +18,8 @@ export default function Goals() {
   const [goalTasks, setGoalTasks] = useState({});
   const [rescheduleSuggestions, setRescheduleSuggestions] = useState({});
   const [reschedulingTaskId, setReschedulingTaskId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const weekStart = '2026-05-11';
 
@@ -90,25 +95,30 @@ export default function Goals() {
     }
   }
 
-  useEffect(() => {
-    async function loadGoalsAndTasks() {
-      try {
-        const goalsData = await api.get('/goals');
-        setGoals(goalsData);
+  async function loadGoalsAndTasks() {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const taskResults = await Promise.all(
-          goalsData.map(async (goal) => {
-            const tasks = await api.get(`/goals/${goal.id}/tasks`);
-            return [goal.id, tasks];
-          })
-        );
+      const goalsData = await api.get('/goals');
+      setGoals(goalsData);
 
-        setGoalTasks(Object.fromEntries(taskResults));
-      } catch (err) {
-        console.error('Failed to load goals and tasks:', err);
-      }
+      const taskResults = await Promise.all(
+        goalsData.map(async (goal) => {
+          const tasks = await api.get(`/goals/${goal.id}/tasks`);
+          return [goal.id, tasks];
+        })
+      );
+
+      setGoalTasks(Object.fromEntries(taskResults));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadGoalsAndTasks();
   }, []);
  
@@ -375,6 +385,15 @@ export default function Goals() {
       </div>
       <button className="add-goal-button" onClick={() => setShowModal(true)}>Add Goal</button>
 
+      {loading && <PageSkeleton type="cards" />}
+
+      {error && (
+        <ErrorState
+          message={error}
+          onRetry={loadGoalsAndTasks}
+        />
+      )}
+
       {showModal && (
         <div className="modal-overlay">
           <div className="goal-modal">
@@ -399,6 +418,11 @@ export default function Goals() {
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
               <div className="modal-actions">
@@ -419,291 +443,310 @@ export default function Goals() {
         </div>
       )}
 
-      {!goals.length && (
-        <div className="empty-goals">
-          Belum ada goal. Tentukan apa yang ingin Anda pelajari.
-        </div>
+      {!loading && !error && !goals.length && (
+        <EmptyState
+          type="goals"
+          onAction={() => setShowModal(true)}
+        />
       )}
 
-      <ul className="goals-list">
-        {goals.map((goal) => (
-          <li className="goal-card" key={goal.id}>
-            <div className={`goal-status-bar ${getGoalStatus(goal)}`}></div>
+      {!loading && !error && goals.length > 0 && (
+        <ul className="goals-list">
+          {goals.map((goal) => (
+            <li className="goal-card" key={goal.id}>
+              <div className={`goal-status-bar ${getGoalStatus(goal)}`}></div>
 
-            <div className="goal-card-header">
-              <div>
-                <p className="goal-title">{goal.title}</p>
+              <div className="goal-card-header">
+                <div>
+                  <p className="goal-title">{goal.title}</p>
 
-                <span className="goal-deadline">
-                  Deadline: {formatDate(goal.deadline)}
+                  <span className="goal-deadline">
+                    Deadline: {formatDate(goal.deadline)}
+                  </span>
+                </div>
+
+                <span className={`status-badge ${getGoalStatus(goal)}`}>
+                  {getGoalStatus(goal)}
                 </span>
+
+                <div className="goal-action-buttons">
+                  <button 
+                    type="button"
+                    className="add-task-button"
+                    onClick={() => setActiveTaskGoalId(goal.id)}
+                    aria-label={`Add task to goal "${goal.title}"`}
+                  >
+                    +
+                  </button>
+
+                  <button
+                    type="button"
+                    className="delete-button"
+                    onClick={() => handleDeleteGoal(goal.id)}
+                    aria-label={`Delete goal "${goal.title}"`}
+                  >
+                    Delete
+                  </button>
+
+                  <button
+                    type="button"
+                    className="task-dropdown-button"
+                    onClick={() => toggleGoalTasks(goal.id)}
+                    aria-label={`${expandedGoals[goal.id] === goal.id ? 'Hide' : 'Show'} tasks for goal "${goal.title}"`}
+                    aria-expanded={expandedGoals[goal.id] === goal.id}
+                  >
+                    {expandedGoals[goal.id] ? '▲' : '▼'}
+                  </button>
+                </div>
               </div>
 
-              <span className={`status-badge ${getGoalStatus(goal)}`}>
-                {getGoalStatus(goal)}
-              </span>
+              {expandedGoals[goal.id] && (
+                <div className="tasks-dropdown">
+                  {goalTasks[goal.id]?.length ? (
+                    <ul className="task-list">
+                      {goalTasks[goal.id].map((task) => (
+                        <li className={`task-row ${getTaskStatus(task)}`} key={task.id}>
+                          <div>
+                            <p className="task-title">{task.title}</p>
 
-              <div className="goal-action-buttons">
-                <button 
-                  type="button"
-                  className="add-task-button"
-                  onClick={() => setActiveTaskGoalId(goal.id)}
-                >
-                  +
-                </button>
+                            {task.description && (
+                              <p className="task-description">{task.description}</p>
+                            )}
+                          </div>
 
-                <button
-                  type="button"
-                  className="ai-popup-button"
-                  onClick={() => setActiveAIGoalId(goal.id)}
-                >
-                  AI
-                </button>
+                          <div className="task-meta">
+                            <span className="task-meta-pill">{formatDate(task.planned_date)}</span>
+                            <span className="task-meta-pill">{task.planned_slot}</span>
+                            <span className="task-meta-pill">{task.duration_estimate} min</span>
+                            <span className={`task-meta-pill status-badge ${getTaskStatus(task)}`}>
+                              {getTaskStatus(task)}
+                            </span>
+                          </div>
+                          <div className="task-row-actions">
+                            {getTaskStatus(task) === 'overdue' ? (
+                              <button 
+                                type="button" 
+                                className="reschedule-button"
+                                onClick={() => handleRescheduleTask(task.id)}
+                                aria-label={`Reschedule task "${task.title}"`}
+                                disabled={reschedulingTaskId === task.id}
+                              >
+                                {reschedulingTaskId === task.id ? 'Rescheduling...' : 'Reschedule'}
+                              </button>
+                            ) : getTaskStatus(task) === 'finished' ? (
+                              <span className="finished-label">Done</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="done-button"
+                                onClick={() => handleMarkTaskDone(task.id)}
+                                aria-label={`Mark task "${task.title}" as done`}
+                              >
+                                Mark as Done
+                              </button>
+                            )}
 
-                <button
-                  type="button"
-                  className="delete-button"
-                  onClick={() => handleDeleteGoal(goal.id)}
-                >
-                  Delete
-                </button>
-
-                <button
-                  type="button"
-                  className="task-dropdown-button"
-                  onClick={() => toggleGoalTasks(goal.id)}
-                >
-                  {expandedGoals[goal.id] ? 'Hide Tasks' : 'Show Tasks'}
-                </button>
-              </div>
-            </div>
-
-            {expandedGoals[goal.id] && (
-              <div className="tasks-dropdown">
-                {goalTasks[goal.id]?.length ? (
-                  <ul className="task-list">
-                    {goalTasks[goal.id].map((task) => (
-                      <li className={`task-row ${getTaskStatus(task)}`} key={task.id}>
-                        <div>
-                          <p className="task-title">{task.title}</p>
-
-                          {task.description && (
-                            <p className="task-description">{task.description}</p>
-                          )}
-                        </div>
-
-                        <div className="task-meta">
-                          <span>{formatDate(task.planned_date)}</span>
-                          <span>{task.planned_slot}</span>
-                          <span>{task.duration_estimate} min</span>
-                          <span className={`status-badge ${getTaskStatus(task)}`}>
-                            {getTaskStatus(task)}
-                          </span>
-                        </div>
-                        <div>
-                          {getTaskStatus(task) === 'overdue' ? (
-                            <button 
-                              type="button" 
-                              className="reschedule-button"
-                              onClick={() => handleRescheduleTask(task.id)}
-                              disabled={reschedulingTaskId === task.id}
-                            >
-                              {reschedulingTaskId === task.id ? 'Rescheduling...' : 'Reschedule'}
-                            </button>
-                          ) : getTaskStatus(task) === 'finished' ? (
-                            <span className="finished-label">Done</span>
-                          ) : (
                             <button
                               type="button"
-                              className="done-button"
-                              onClick={() => handleMarkTaskDone(task.id)}
+                              className="delete-button"
+                              onClick={() => handleDeleteTask(task.id)}
+                              aria-label={`Delete task "${task.title}"`}
                             >
-                              Mark as Done
+                              Delete
                             </button>
-                          )}
+                          </div>
 
+                          {rescheduleSuggestions[task.id] && (
+                            <div className="goal-reschedule-suggestion">
+                              <h4>AI Reschedule Suggestion</h4>
+
+                              <p>
+                                <strong>New Date:</strong>{' '}
+                                {rescheduleSuggestions[task.id].suggested_date}
+                              </p>
+
+                              <p>
+                                <strong>New Slot:</strong>{' '}
+                                {rescheduleSuggestions[task.id].suggested_slot}
+                              </p>
+
+                              <p>
+                                <strong>Reason:</strong>{' '}
+                                {rescheduleSuggestions[task.id].reason}
+                              </p>
+
+                              <div className="reschedule-actions">
+                                <button
+                                  type="button"
+                                    className="accept-button"
+                                    onClick={() => handleAcceptReschedule(task.id)}
+                                >
+                                  Accept
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="decline-button"
+                                  onClick={() => handleDeclineReschedule(task.id)}
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <EmptyState
+                      type="tasks"
+                      onAction={() => setActiveAIGoalId(goal.id)}
+                    />
+                  )}
+                </div>
+              )}
+                
+              {activeTaskGoalId === goal.id && (
+                <div className="task-modal-overlay">
+                  <div className="task-modal">
+                    <form
+                      className="task-modal-form"
+                      onSubmit={(e) => handleCreateTask(e, goal.id)}
+                    >
+                      <div className="task-modal-header">
+                        <h2>Add Manual Task</h2>
+                        <p>Add a task for: {goal.title}</p>
+                      </div>
+
+                      <div className="task-form-field">
+                        <label>Task Title</label>
+                        <input
+                          type="text"
+                          placeholder="Example: Study React state"
+                          value={taskForms[goal.id]?.title || ''}
+                          onChange={(e) =>
+                            handleTaskFormChange(goal.id, 'title', e.target.value)
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="task-form-field">
+                        <label>Description</label>
+                        <input
+                          type="text"
+                          placeholder="Example: Practice useState and forms"
+                          value={taskForms[goal.id]?.description || ''}
+                          onChange={(e) =>
+                            handleTaskFormChange(goal.id, 'description', e.target.value)
+                          }
+                        />
+                      </div>
+
+                      <div className="task-form-field">
+                        <label>Duration</label>
+                        <input
+                          type="number"
+                          min="25"
+                          max="90"
+                          placeholder="45"
+                          value={taskForms[goal.id]?.duration_estimate || 45}
+                          onChange={(e) =>
+                            handleTaskFormChange(goal.id, 'duration_estimate', e.target.value)
+                          }
+                          />
+                      </div>
+
+                      <div className="task-form-field">
+                        <label>Planned Date</label>
+                        <input
+                          type="date"
+                          value={taskForms[goal.id]?.planned_date || ''}
+                          onChange={(e) =>
+                            handleTaskFormChange(goal.id, 'planned_date', e.target.value)
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="task-form-field">
+                        <label>Preferred Slot</label>
+                        <select
+                          value={taskForms[goal.id]?.planned_slot || 'evening'}
+                          onChange={(e) =>
+                          handleTaskFormChange(goal.id, 'planned_slot', e.target.value)
+                          }
+                        >
+                          <option value="morning">Morning</option>
+                          <option value="afternoon">Afternoon</option>
+                          <option value="evening">Evening</option>
+                        </select>
+                      </div>
+                      
+                      <div className="task-modal-actions">
+                        <button
+                          type="button"
+                          className="task-ai-button"
+                          onClick={() => {
+                            setActiveTaskGoalId(null);
+                            setActiveAIGoalId(goal.id);
+                          }}
+                          aria-label={`Open AI task suggestions for goal "${goal.title}"`}
+                        >
+                          AI Suggest Task
+                        </button>
+
+                        <div className="task-modal-right-actions">
                           <button
                             type="button"
-                            className="delete-button"
-                            onClick={() => handleDeleteTask(task.id)}
+                            className="task-cancel-button"
+                            onClick={() => setActiveTaskGoalId(null)}
                           >
-                            Delete
+                            Cancel
+                          </button>
+
+                          <button type="submit" 
+                          className="task-submit-button"
+                          >
+                            Add Task
                           </button>
                         </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
 
-                        {rescheduleSuggestions[task.id] && (
-                          <div className="goal-reschedule-suggestion">
-                            <h4>AI Reschedule Suggestion</h4>
+              {activeAIGoalId === goal.id && (
+                <div className="ai-modal-overlay">
+                  <div className="ai-modal">
+                    <div className="ai-modal-header">
+                      <div>
+                        <h2>AI Task Suggestions</h2>
+                        <p>Generate task breakdowns for: {goal.title}</p>
+                      </div>
 
-                            <p>
-                              <strong>New Date:</strong>{' '}
-                              {rescheduleSuggestions[task.id].suggested_date}
-                            </p>
-
-                            <p>
-                              <strong>New Slot:</strong>{' '}
-                              {rescheduleSuggestions[task.id].suggested_slot}
-                            </p>
-
-                            <p>
-                              <strong>Reason:</strong>{' '}
-                              {rescheduleSuggestions[task.id].reason}
-                            </p>
-
-                            <div className="reschedule-actions">
-                              <button
-                                type="button"
-                                  className="accept-button"
-                                  onClick={() => handleAcceptReschedule(task.id)}
-                              >
-                                Accept
-                              </button>
-
-                              <button
-                                type="button"
-                                className="decline-button"
-                                onClick={() => handleDeclineReschedule(task.id)}
-                              >
-                                Decline
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-tasks-message">No tasks added yet.</p>
-                )}
-              </div>
-            )}
-              
-            {activeTaskGoalId === goal.id && (
-              <div className="task-modal-overlay">
-                <div className="task-modal">
-                  <form
-                    className="task-modal-form"
-                    onSubmit={(e) => handleCreateTask(e, goal.id)}
-                  >
-                    <div className="task-modal-header">
-                      <h2>Add Manual Task</h2>
-                      <p>Add a task for: {goal.title}</p>
-                    </div>
-
-                    <div className="task-form-field">
-                      <label>Task Title</label>
-                      <input
-                        type="text"
-                        placeholder="Example: Study React state"
-                        value={taskForms[goal.id]?.title || ''}
-                        onChange={(e) =>
-                          handleTaskFormChange(goal.id, 'title', e.target.value)
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="task-form-field">
-                      <label>Description</label>
-                      <input
-                        type="text"
-                        placeholder="Example: Practice useState and forms"
-                        value={taskForms[goal.id]?.description || ''}
-                        onChange={(e) =>
-                          handleTaskFormChange(goal.id, 'description', e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className="task-form-field">
-                      <label>Duration</label>
-                      <input
-                        type="number"
-                        min="25"
-                        max="90"
-                        placeholder="45"
-                        value={taskForms[goal.id]?.duration_estimate || 45}
-                        onChange={(e) =>
-                          handleTaskFormChange(goal.id, 'duration_estimate', e.target.value)
-                        }
-                        />
-                    </div>
-
-                    <div className="task-form-field">
-                      <label>Planned Date</label>
-                      <input
-                        type="date"
-                        value={taskForms[goal.id]?.planned_date || ''}
-                        onChange={(e) =>
-                          handleTaskFormChange(goal.id, 'planned_date', e.target.value)
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="task-form-field">
-                      <label>Preferred Slot</label>
-                      <select
-                        value={taskForms[goal.id]?.planned_slot || 'evening'}
-                        onChange={(e) =>
-                        handleTaskFormChange(goal.id, 'planned_slot', e.target.value)
-                        }
-                      >
-                        <option value="morning">Morning</option>
-                        <option value="afternoon">Afternoon</option>
-                        <option value="evening">Evening</option>
-                      </select>
-                    </div>
-                    
-                    <div className="task-modal-actions">
                       <button
                         type="button"
-                        className="task-cancel-button"
-                        onClick={() => setActiveTaskGoalId(null)}
+                        className="ai-modal-close"
+                        onClick={() => setActiveAIGoalId(null)}
                       >
-                        Cancel
-                      </button>
-
-                      <button type="submit" 
-                      className="task-submit-button"
-                      >
-                        Add Task
+                        ×
                       </button>
                     </div>
-                  </form>
-                </div>
-              </div>
-            )}
 
-            {activeAIGoalId === goal.id && (
-              <div className="ai-modal-overlay">
-                <div className="ai-modal">
-                  <div className="ai-modal-header">
-                    <div>
-                      <h2>AI Task Suggestions</h2>
-                      <p>Generate task breakdowns for: {goal.title}</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="ai-modal-close"
-                      onClick={() => setActiveAIGoalId(null)}
-                    >
-                      ×
-                    </button>
+                    <AISuggestionPanel
+                      goalId={goal.id}
+                      weekStart={weekStart}
+                      onAccept={handleAcceptedTask}
+                    />
                   </div>
-
-                  <AISuggestionPanel
-                    goalId={goal.id}
-                    weekStart={weekStart}
-                    onAccept={handleAcceptedTask}
-                  />
                 </div>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

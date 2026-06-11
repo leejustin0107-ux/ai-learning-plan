@@ -5,6 +5,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const path = require('path');
 const config = require('../utils/config');
+const logger = require('../utils/logger');
+const { aiRequestCount } = require('../utils/metrics');
 
 // Schema untuk validasi output AI
 const TaskSchema = z.object({
@@ -97,41 +99,42 @@ const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 async function callLLMReal(type, context) {
   const systemPrompt = loadSystemPrompt();
   const safeContext = sanitizeContext(context);
+  const userPrompt = `Type: ${type}\nContext: ${JSON.stringify(safeContext)}`;
 
-  let userPrompt;
+  const start = Date.now();
 
-  if (type === 'reschedule') {
-    userPrompt = `
-Type: reschedule
+  try {
+    const result = await model.generateContent([systemPrompt, userPrompt]);
+    const response = result.response;
+    const durationMs = Date.now() - start;
 
-You are helping the user reschedule an overdue task.
+    const tokenUsage = {
+      input_tokens: response.usageMetadata?.promptTokenCount || 0,
+      output_tokens: response.usageMetadata?.candidatesTokenCount || 0,
+    };
 
-Rules:
-- Return only valid JSON.
-- Do not include markdown.
-- Do not include explanation outside JSON.
-- suggested_slot must be one of: morning, afternoon, evening.
-- suggested_date must be today or later.
-- Avoid slots that already have many tasks.
-- Consider user availability, preferred time, and remaining weekly capacity.
+    aiRequestCount.inc({ type, status: 'success' });
 
-Context:
-${JSON.stringify(context, null, 2)}
+    logger.info({
+      action: 'llm_call',
+      type,
+      duration_ms: durationMs,
+      ...tokenUsage,
+    });
 
-Return exactly this JSON format:
-{
-  "task_id": "task id from overdue_tasks",
-  "suggested_date": "YYYY-MM-DD",
-  "suggested_slot": "morning",
-  "reason": "short reason"
-}
-`;
-  } else {
-    userPrompt = `Type: ${type}\nContext: ${JSON.stringify(safeContext)}`;
+    return response.text();
+  } catch (err) {
+    aiRequestCount.inc({ type, status: 'error' });
+
+    logger.error({
+      action: 'llm_call_error',
+      type,
+      error_message: err.message,
+      duration_ms: Date.now() - start,
+    });
+
+    throw err;
   }
-
-  const result = await model.generateContent([systemPrompt, userPrompt]);
-  return result.response.text();
 }
 
 

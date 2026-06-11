@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import '../styles/progress.css'
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
+import { PageSkeleton } from '../components/Skeleton';
 
 function getWeekString(date = new Date()) {
   const d = new Date(date);
@@ -15,6 +18,7 @@ export default function Progress() {
   const [week, setWeek] = useState(getWeekString());
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   function changeWeek(week, offset) {
     const [yearPart, weekPart] = week.split('-W');
@@ -45,31 +49,39 @@ export default function Progress() {
     return 'No completed tasks yet for this week.';
   }
 
-  useEffect(() => {
-    async function fetchProgress() {
-      try {
-        setLoading(true);
-        const data = await api.get(`/progress/weekly?week=${week}`);
-        setProgress(data);
-      } catch (err) {
-        console.error('Failed to fetch progress:', err);
-        alert(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+  async function fetchProgress() {
+    try {
+      setLoading(true);
+      setError(null);
 
+      const data = await api.get(`/progress/weekly?week=${week}`);
+      setProgress(data);
+    } catch (err) {
+      console.error('Failed to fetch progress:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     fetchProgress();
   }, [week]);
 
   if (loading) {
-    return <p>Loading progress...</p>;
+    return (
+      <div className="progress-page">
+        <PageSkeleton type="cards" />
+      </div>
+    );
   }
 
   const plannedHours = Number(progress?.planned_hours || 0);
   const completedHours = Number(progress?.completed_hours || 0);
   const completionRate = Number(progress?.completion_rate || 0);
   const completionPercent = Math.round(completionRate * 100);
+
+  const hasProgressData = plannedHours > 0 || completedHours > 0;
 
   return (
     <div className="progress-page">
@@ -78,7 +90,7 @@ export default function Progress() {
 
       <div className="progress-week-controls">
         <button type="button" onClick={() => setWeek(changeWeek(week, -1))}>
-          ← Previous Week
+          ←
         </button>
 
         <input
@@ -88,11 +100,15 @@ export default function Progress() {
         />
 
         <button type="button" onClick={() => setWeek(changeWeek(week, 1))}>
-          Next Week →
+          →
         </button>
       </div>
 
-      {progress && (
+      {error ? (
+        <ErrorState message={error} onRetry={fetchProgress} />
+      ) : !hasProgressData ? (
+        <EmptyState type="progress" />
+      ) : (
         <div className="progress-dashboard">
           <div className="progress-summary-card">
             <span className="progress-label">Planned Hours</span>

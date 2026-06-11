@@ -7,7 +7,9 @@ async function request(path, options = {}) {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
+      'Cache-Control': 'no-cache',
     },
+    cache: 'no-store',
   });
   if (res.status === 401) {
     localStorage.removeItem('token');
