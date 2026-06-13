@@ -693,3 +693,68 @@ Fitur MVP yang tersedia:
 * Weekly progress tracking
 * AI context sanitization
 * AI recommendation audit
+
+## Testing, Coverage, and Accessibility
+
+### Test Coverage
+
+Backend tests were executed using Jest with coverage reporting.
+
+```bash
+cd server
+npm run test:coverage
+```
+
+The test suite covers authentication, AI output validation, progress calculation, middleware handling, metrics endpoint behavior, and the AI suggestion-to-task flow.
+
+Coverage evidence is provided in:
+
+```txt
+docs/TEST_COVERAGE.md
+```
+
+A screenshot of the coverage result is included at:
+
+```txt
+docs/screenshots/test-coverage.png
+```
+
+### Accessibility Audit
+
+Accessibility was reviewed using Lighthouse and axe-core through the axe DevTools browser extension.
+
+The audit checked key pages including Login, Register, Dashboard, Goals, Calendar, Progress, and Profile.
+
+Accessibility improvements made include:
+
+* Replaced generic loading text with skeleton loading screens.
+* Added `aria-label` to icon-only buttons.
+* Used semantic buttons for interactive controls.
+* Added keyboard support for calendar task interaction.
+* Added visible focus states using `:focus-visible`.
+* Added EmptyState and ErrorState components for clearer feedback.
+* Improved color contrast for buttons, cards, and text.
+* Added accessible form labels and error messages.
+
+Full accessibility audit summary is available in:
+
+```txt
+docs/ACCESSIBILITY_AUDIT.md
+```
+
+### AI Suggestion Acceptance Rate
+
+The system tracks AI suggestion usefulness using Prometheus metrics:
+
+```txt
+ai_suggestions_generated_total
+ai_suggestions_accepted_total
+```
+
+The acceptance rate is calculated as:
+
+```txt
+Accepted AI Suggestions / Generated AI Suggestions × 100
+```
+
+This helps evaluate whether AI-generated learning tasks are useful to users.

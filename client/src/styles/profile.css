@@ -404,6 +404,94 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
+/* ========================= */
+/* AXE CONTRAST FIX */
+/* ========================= */
+
+/* Darker supporting text */
+.profile-header p,
+.profile-loading,
+.profile-card-header p,
+.profile-section-header p,
+.profile-modal-header p {
+  color: #4b5563;
+}
+
+/* Darker labels and muted text inside cards */
+.profile-info-item span,
+.availability-card p,
+.profile-modal p,
+.profile-form-field label,
+.availability-checkbox {
+  color: #374151;
+}
+
+/* Strong text */
+.profile-card h2,
+.profile-section-header h2,
+.availability-card h3,
+.profile-modal-header h2,
+.availability-edit-section h3 {
+  color: #111827;
+}
+
+/* Availability badges with stronger contrast */
+.availability-card.available span {
+  background-color: #bbf7d0;
+  color: #14532d;
+}
+
+.availability-card.unavailable span {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Input contrast */
+.profile-form-field input,
+.profile-form-field select,
+.availability-edit-row input[type='time'] {
+  color: #111827;
+  background-color: #ffffff;
+  border-color: #9ca3af;
+}
+
+/* Disabled input contrast */
+.availability-edit-row input:disabled {
+  background-color: #e5e7eb;
+  color: #374151;
+  opacity: 1;
+}
+
+/* Placeholder contrast */
+.profile-form-field input::placeholder,
+.profile-form-field select::placeholder,
+.availability-edit-row input::placeholder {
+  color: #4b5563;
+  opacity: 1;
+}
+
+/* Secondary button contrast */
+.profile-secondary-button {
+  border-color: #9ca3af;
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.profile-secondary-button:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+/* Modal close button contrast */
+.profile-modal-close {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.profile-modal-close:hover {
+  background-color: #d1d5db;
+}
+
 /* Animation */
 
 @keyframes profileModalFadeIn {
