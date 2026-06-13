@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import ErrorState from './ErrorState';
 import { PageSkeleton } from './Skeleton';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+} from 'lucide-react';
 
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -88,6 +93,8 @@ function getTaskStatus(task) {
 export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick }) {
   const [weekStart, setWeekStart] = useState(getMonday());
   const [tasksByDay, setTasksByDay] = useState({});
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
+  const [dragOverSlot, setDragOverSlot] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -125,6 +132,30 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
 
   const hasTasks = Object.values(tasksByDay).some((tasks) => tasks.length > 0);
 
+  async function handleDropTask(e, newDate, newSlot) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const taskId = e.dataTransfer.getData('text/plain');
+
+    if (!taskId) return;
+
+    try {
+      await api.patch(`/tasks/${taskId}`, {
+        planned_date: newDate,
+        planned_slot: newSlot,
+      });
+
+      await fetchWeekTasks();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to move task. Please try again.');
+    } finally {
+      setDraggingTaskId(null);
+      setDragOverSlot(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="weekly-calendar">
@@ -141,7 +172,7 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
           onClick={() => navigateWeek(-1)}
           aria-label="Go to previous week"
         >
-          ←
+          <ChevronLeft size={20} aria-hidden="true" />
         </button>
 
         <h3>Week of {weekStart}</h3>
@@ -151,7 +182,7 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
           onClick={() => navigateWeek(1)}
           aria-label="Go to next week"
         >
-          →
+          <ChevronRight size={20} aria-hidden="true" />
         </button>
       </div>
 
@@ -191,7 +222,15 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
                       }
                       className={`time-slot ${
                         slotTasks.length ? 'has-tasks' : 'empty'
-                      }`}
+                      } ${dragOverSlot === `${dateKey}-${slot}` ? 'drag-over' : ''}`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverSlot(`${dateKey}-${slot}`);
+                      }}
+                      onDragLeave={() => {
+                        setDragOverSlot(null);
+                      }}
+                      onDrop={(e) => handleDropTask(e, dateKey, slot)}
                       onKeyDown={(e) => {
                         if (
                           isEmptySlot &&
@@ -210,26 +249,52 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
                       <span className="slot-label">{SLOT_LABELS[slot]}</span>
 
                       <div className="slot-task-list">
-                        {slotTasks.map((task) => (
-                          <button
-                            key={task.id}
-                            type="button"
-                            className={`calendar-task-card ${getTaskStatus(task)}`}
-                            aria-label={`Open task "${task.title}", ${task.duration_estimate} minutes`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onTaskClick?.(task);
-                            }}
-                          >
-                            <span className="calendar-task-title">
-                              {task.title}
-                            </span>
+                        {slotTasks.map((task) => {
+                          const taskStatus = getTaskStatus(task);
+                          const canDragTask = taskStatus !== 'finished';
 
-                            <span className="calendar-task-duration">
-                              {task.duration_estimate}m
-                            </span>
-                          </button>
-                        ))}
+                          return (
+                            <button
+                              key={task.id}
+                              type="button"
+                              draggable={canDragTask}
+                              className={`calendar-task-card ${taskStatus} ${
+                                draggingTaskId === task.id ? 'dragging' : ''
+                              }`}
+                              aria-label={`Open task "${task.title}", ${task.duration_estimate} minutes`}
+                              title={canDragTask ? 'Drag task to reschedule' : 'Finished task'}
+                              onDragStart={(e) => {
+                                if (!canDragTask) return;
+
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.setData('text/plain', String(task.id));
+                                setDraggingTaskId(task.id);
+                              }}
+                              onDragEnd={() => {
+                                setDraggingTaskId(null);
+                                setDragOverSlot(null);
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onTaskClick?.(task);
+                              }}
+                            >
+                              <span className="calendar-task-icon">
+                                <Clock3 size={14} aria-hidden="true" />
+                              </span>
+
+                              <span className="calendar-task-content">
+                                <span className="calendar-task-title">
+                                  {task.title}
+                                </span>
+
+                                <span className="calendar-task-duration">
+                                  {task.duration_estimate}m
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   );

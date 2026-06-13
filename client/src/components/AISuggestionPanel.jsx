@@ -96,7 +96,7 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
         </p>
 
         <button type="button" onClick={fetchSuggestions}>
-          🤖 Suggest study plan
+          Suggest study plan
         </button>
       </div>
     );

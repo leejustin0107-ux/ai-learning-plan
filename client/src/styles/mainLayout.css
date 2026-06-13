@@ -112,6 +112,10 @@
   margin-top: auto;
   padding-top: 16px;
 
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -150,6 +154,34 @@
   color: #ffffff;
 }
 
+/* ========================= */
+/* LOGOUT BUTTON */
+/* ========================= */
+
+.logout-button {
+  width: 100%;
+
+  border: none;
+  background: transparent;
+
+  font-family: inherit;
+  text-align: left;
+}
+
+.logout-button:hover {
+  background-color: #7f1d1d;
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.logout-button:active {
+  transform: translateX(0);
+}
+
+/* ========================= */
+/* COLLAPSED SIDEBAR */
+/* ========================= */
+
 .sidebar-collapsed .sidebar-link {
   justify-content: center;
   padding: 12px;
@@ -161,10 +193,15 @@
 
 .sidebar-collapsed .sidebar-footer {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sidebar-collapsed .sidebar-footer .sidebar-link {
+  justify-content: center;
+}
+
+.sidebar-collapsed .logout-button {
   justify-content: center;
 }
 
@@ -235,6 +272,11 @@ a:focus-visible {
 
   .sidebar-footer {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .logout-button {
     justify-content: center;
   }
 
@@ -296,6 +338,8 @@ a:focus-visible {
     padding-top: 0;
 
     display: flex;
+    flex-direction: row;
+    gap: 6px;
 
     border-top: none;
   }
@@ -312,6 +356,16 @@ a:focus-visible {
 
   .sidebar-link span {
     display: none;
+  }
+
+  .logout-button {
+    width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+
+  .logout-button:hover {
+    transform: none;
   }
 
   .content {

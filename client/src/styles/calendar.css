@@ -409,3 +409,30 @@
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
+
+.calendar-task-card {
+  cursor: grab;
+}
+
+.calendar-task-card:active {
+  cursor: grabbing;
+}
+
+.calendar-task-card.finished {
+  cursor: default;
+}
+
+.calendar-task-card.dragging {
+  opacity: 0.45;
+  transform: scale(0.98);
+}
+
+.time-slot.drag-over {
+  outline: 3px dashed #2563eb;
+  outline-offset: -6px;
+  background-color: #eff6ff;
+}
+
+.time-slot.drag-over .slot-label {
+  color: #1d4ed8;
+}

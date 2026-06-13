@@ -217,4 +217,64 @@ router.patch('/tasks/:taskId/schedule', authenticate, async (req, res, next) => 
   }
 });
 
+router.patch('/tasks/:taskId', authenticate, async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+    const userId = req.user.id || req.user.userId;
+
+    const allowedFields = [
+      'title',
+      'duration_estimate',
+      'planned_date',
+      'planned_slot',
+      'status',
+    ];
+
+    const updates = [];
+    const values = [];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        values.push(req.body[field]);
+        updates.push(`${field} = $${values.length}`);
+      }
+    });
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        error: 'No valid fields provided for update',
+      });
+    }
+
+    values.push(taskId);
+    values.push(userId);
+
+    const taskIdIndex = values.length - 1;
+    const userIdIndex = values.length;
+
+    const result = await db.query(
+      `
+      UPDATE tasks t
+      SET ${updates.join(', ')}
+      FROM goals g
+      WHERE t.goal_id = g.id
+        AND t.id = $${taskIdIndex}
+        AND g.user_id = $${userIdIndex}
+      RETURNING t.*;
+      `,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Task not found',
+      });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 module.exports = router;

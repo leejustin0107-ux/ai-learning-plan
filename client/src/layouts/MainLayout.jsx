@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Target,
   CalendarDays,
   BarChart3,
   User,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -13,6 +14,13 @@ import '../styles/mainLayout.css';
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem('token');
+    navigate('/login');
+  }
 
   return (
     <div className={`app-layout ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
@@ -95,6 +103,16 @@ export default function MainLayout() {
               <User className="sidebar-icon" size={20} aria-hidden="true" />
               {sidebarOpen && <span>Profile</span>}
             </NavLink>
+
+            <button
+              type="button"
+              className="sidebar-link logout-button"
+              onClick={handleLogout}
+              aria-label="Log out of your account"
+            >
+              <LogOut className="sidebar-icon" size={20} aria-hidden="true" />
+              {sidebarOpen && <span>Logout</span>}
+            </button>
           </div>
         </div>
       </nav>

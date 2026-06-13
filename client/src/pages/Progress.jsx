@@ -4,6 +4,10 @@ import '../styles/progress.css'
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import { PageSkeleton } from '../components/Skeleton';
+import {
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 function getWeekString(date = new Date()) {
   const d = new Date(date);
@@ -89,18 +93,31 @@ export default function Progress() {
       <p>Weekly learning progress summary.</p>
 
       <div className="progress-week-controls">
-        <button type="button" onClick={() => setWeek(changeWeek(week, -1))}>
-          ←
+        <button
+          type="button"
+          className="progress-nav-button"
+          onClick={() => setWeek(changeWeek(week, -1))}
+          aria-label="Go to previous week"
+          title="Previous week"
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
         </button>
 
         <input
           value={week}
           onChange={(e) => setWeek(e.target.value.toUpperCase())}
           placeholder="2026-W22"
+          aria-label="Selected progress week"
         />
 
-        <button type="button" onClick={() => setWeek(changeWeek(week, 1))}>
-          →
+        <button
+          type="button"
+          className="progress-nav-button"
+          onClick={() => setWeek(changeWeek(week, 1))}
+          aria-label="Go to next week"
+          title="Next week"
+        >
+          <ChevronRight size={20} aria-hidden="true" />
         </button>
       </div>
 

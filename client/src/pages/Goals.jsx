@@ -4,6 +4,15 @@ import AISuggestionPanel from '../components/AISuggestionPanel';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import { PageSkeleton } from '../components/Skeleton';
+import {
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  RotateCcw,
+  Pencil,
+} from 'lucide-react';
 import '../styles/goals.css';
 
 export default function Goals() {
@@ -18,6 +27,20 @@ export default function Goals() {
   const [goalTasks, setGoalTasks] = useState({});
   const [rescheduleSuggestions, setRescheduleSuggestions] = useState({});
   const [reschedulingTaskId, setReschedulingTaskId] = useState(null);
+  const [editingGoalId, setEditingGoalId] = useState(null);
+  const [goalEditForm, setGoalEditForm] = useState({
+    title: '',
+    description: '',
+    deadline: '',
+  });
+
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [taskEditForm, setTaskEditForm] = useState({
+    title: '',
+    duration_estimate: 25,
+    planned_date: '',
+    planned_slot: 'morning',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -159,6 +182,18 @@ export default function Goals() {
     }));
   }
 
+  function toDateInputValue(value) {
+    if (!value) return '';
+
+    const dateString = String(value);
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+      return dateString.slice(0, 10);
+    }
+
+    return '';
+  }
+
 
   function toggleGoalTasks(goalId) {
     setExpandedGoals((prev) => ({
@@ -210,6 +245,24 @@ export default function Goals() {
     alert(err.message);
     } 
   }
+
+  function openEditGoalModal(goal) {
+  setEditingGoalId(goal.id);
+  setGoalEditForm({
+    title: goal.title || '',
+    description: goal.description || '',
+    deadline: toDateInputValue(goal.deadline),
+  });
+}
+
+function closeEditGoalModal() {
+  setEditingGoalId(null);
+  setGoalEditForm({
+    title: '',
+    description: '',
+    deadline: '',
+  });
+}
 
   function getGoalStatus(goal) {
     if (goal.status === 'done' || goal.status === 'finished') {
@@ -286,6 +339,107 @@ export default function Goals() {
     }
   }
 
+  function openEditGoalModal(goal) {
+    setEditingGoalId(goal.id);
+    setGoalEditForm({
+      title: goal.title || '',
+      description: goal.description || '',
+      deadline: toDateInputValue(goal.deadline),
+    });
+  }
+
+  function closeEditGoalModal() {
+    setEditingGoalId(null);
+    setGoalEditForm({
+      title: '',
+      description: '',
+      deadline: '',
+    });
+  }
+
+  async function handleUpdateGoal(e) {
+    e.preventDefault();
+
+    try {
+      const payload = {
+        title: goalEditForm.title.trim(),
+        description: goalEditForm.description.trim(),
+      };
+
+      if (goalEditForm.deadline) {
+        payload.deadline = goalEditForm.deadline;
+      }
+
+      await api.patch(`/goals/${editingGoalId}`, payload);
+
+      closeEditGoalModal();
+      await loadGoalsAndTasks();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to update goal. Please try again.');
+    }
+  }
+
+  function openEditTaskModal(task) {
+    setEditingTaskId(task.id);
+    setTaskEditForm({
+      title: task.title || '',
+      duration_estimate: task.duration_estimate || 25,
+      planned_date: toDateInputValue(task.planned_date),
+      planned_slot: task.planned_slot || 'morning',
+    });
+  }
+
+  function closeEditTaskModal() {
+    setEditingTaskId(null);
+    setTaskEditForm({
+      title: '',
+      duration_estimate: 25,
+      planned_date: '',
+      planned_slot: 'morning',
+    });
+  }
+
+  async function handleUpdateTask(e) {
+    e.preventDefault();
+
+    const duration = Number(taskEditForm.duration_estimate);
+
+    if (!taskEditForm.title.trim()) {
+      setError('Task title is required.');
+      return;
+    }
+
+    if (!Number.isFinite(duration) || duration < 25 || duration > 90) {
+      setError('Task duration must be between 25 and 90 minutes.');
+      return;
+    }
+
+    if (!taskEditForm.planned_date) {
+      setError('Planned date is required.');
+      return;
+    }
+
+    if (!taskEditForm.planned_slot) {
+      setError('Planned slot is required.');
+      return;
+    }
+
+    try {
+      await api.patch(`/tasks/${editingTaskId}`, {
+        title: taskEditForm.title.trim(),
+        duration_estimate: duration,
+        planned_date: taskEditForm.planned_date,
+        planned_slot: taskEditForm.planned_slot,
+      });
+
+      closeEditTaskModal();
+      await loadGoalsAndTasks();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to update task. Please try again.');
+    }
+  }
   function formatLocalDate(date) {
     const d = new Date(date);
 
@@ -470,13 +624,23 @@ export default function Goals() {
                 </span>
 
                 <div className="goal-action-buttons">
+                  <button
+                    type="button"
+                    className="icon-button edit-button"
+                    onClick={() => openEditGoalModal(goal)}
+                    aria-label={`Edit goal "${goal.title}"`}
+                    title="Edit goal"
+                  >
+                    <Pencil size={18} aria-hidden="true" />
+                  </button>
+
                   <button 
                     type="button"
                     className="add-task-button"
                     onClick={() => setActiveTaskGoalId(goal.id)}
                     aria-label={`Add task to goal "${goal.title}"`}
                   >
-                    +
+                    <Plus size={18} aria-hidden="true" />
                   </button>
 
                   <button
@@ -485,7 +649,7 @@ export default function Goals() {
                     onClick={() => handleDeleteGoal(goal.id)}
                     aria-label={`Delete goal "${goal.title}"`}
                   >
-                    Delete
+                    <Trash2 size={18} aria-hidden="true" />
                   </button>
 
                   <button
@@ -495,7 +659,11 @@ export default function Goals() {
                     aria-label={`${expandedGoals[goal.id] === goal.id ? 'Hide' : 'Show'} tasks for goal "${goal.title}"`}
                     aria-expanded={expandedGoals[goal.id] === goal.id}
                   >
-                    {expandedGoals[goal.id] ? '▲' : '▼'}
+                    {expandedGoals[goal.id] ? (
+                      <ChevronUp size={18} aria-hidden="true" /> 
+                    ) : (
+                      <ChevronDown size={18} aria-hidden="true" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -523,36 +691,49 @@ export default function Goals() {
                             </span>
                           </div>
                           <div className="task-row-actions">
+                            <button
+                              type="button"
+                              className="icon-button edit-button"
+                              onClick={() => openEditTaskModal(task)}
+                              aria-label={`Edit task "${task.title}"`}
+                              title="Edit task"
+                            >
+                              <Pencil size={18} aria-hidden="true" />
+                            </button>
+
                             {getTaskStatus(task) === 'overdue' ? (
                               <button 
                                 type="button" 
-                                className="reschedule-button"
+                                className="icon-button reschedule-button"
                                 onClick={() => handleRescheduleTask(task.id)}
                                 aria-label={`Reschedule task "${task.title}"`}
+                                title="Reschedule task"
                                 disabled={reschedulingTaskId === task.id}
                               >
-                                {reschedulingTaskId === task.id ? 'Rescheduling...' : 'Reschedule'}
+                                <RotateCcw size={17} aria-hidden="true" />
                               </button>
                             ) : getTaskStatus(task) === 'finished' ? (
                               <span className="finished-label">Done</span>
                             ) : (
                               <button
                                 type="button"
-                                className="done-button"
+                                className="icon-button done-button"
                                 onClick={() => handleMarkTaskDone(task.id)}
                                 aria-label={`Mark task "${task.title}" as done`}
+                                title="Mark as done"
                               >
-                                Mark as Done
+                                <Check size={18} aria-hidden="true" />
                               </button>
                             )}
 
                             <button
                               type="button"
-                              className="delete-button"
+                              className="icon-button delete-button"
                               onClick={() => handleDeleteTask(task.id)}
                               aria-label={`Delete task "${task.title}"`}
+                              title="Delete task"
                             >
-                              Delete
+                              <Trash2 size={18} aria-hidden="true" />
                             </button>
                           </div>
 
@@ -746,6 +927,175 @@ export default function Goals() {
             </li>
           ))}
         </ul>
+      )}
+
+      {editingGoalId && (
+        <div className="task-modal-overlay">
+          <div className="task-modal">
+            <form className="task-modal-form" onSubmit={handleUpdateGoal}>
+              <div className="task-modal-header">
+                <h2>Edit Goal</h2>
+                <p>Update your learning goal details.</p>
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-goal-title">Goal Title</label>
+                <input
+                  id="edit-goal-title"
+                  type="text"
+                  value={goalEditForm.title}
+                  onChange={(e) =>
+                    setGoalEditForm((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-goal-description">Description</label>
+                <textarea
+                  id="edit-goal-description"
+                  value={goalEditForm.description}
+                  onChange={(e) =>
+                    setGoalEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  rows="4"
+                />
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-goal-deadline">Deadline</label>
+                <input
+                  id="edit-goal-deadline"
+                  type="date"
+                  value={goalEditForm.deadline}
+                  onChange={(e) =>
+                    setGoalEditForm((prev) => ({
+                      ...prev,
+                      deadline: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="task-modal-actions">
+                <button
+                  type="button"
+                  className="task-cancel-button"
+                  onClick={closeEditGoalModal}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="task-submit-button">
+                  Save Goal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingTaskId && (
+        <div className="task-modal-overlay">
+          <div className="task-modal">
+            <form className="task-modal-form" onSubmit={handleUpdateTask}>
+              <div className="task-modal-header">
+                <h2>Edit Task</h2>
+                <p>Update task details and schedule.</p>
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-task-title">Task Title</label>
+                <input
+                  id="edit-task-title"
+                  type="text"
+                  value={taskEditForm.title}
+                  onChange={(e) =>
+                    setTaskEditForm((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-task-duration">Duration Estimate</label>
+                <input
+                  id="edit-task-duration"
+                  type="number"
+                  min="25"
+                  max="90"
+                  value={taskEditForm.duration_estimate}
+                  onChange={(e) =>
+                    setTaskEditForm((prev) => ({
+                      ...prev,
+                      duration_estimate: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-task-date">Planned Date</label>
+                <input
+                  id="edit-task-date"
+                  type="date"
+                  value={taskEditForm.planned_date}
+                  onChange={(e) =>
+                    setTaskEditForm((prev) => ({
+                      ...prev,
+                      planned_date: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="task-form-field">
+                <label htmlFor="edit-task-slot">Planned Slot</label>
+                <select
+                  id="edit-task-slot"
+                  value={taskEditForm.planned_slot}
+                  onChange={(e) =>
+                    setTaskEditForm((prev) => ({
+                      ...prev,
+                      planned_slot: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="evening">Evening</option>
+                </select>
+              </div>
+
+              <div className="task-modal-actions">
+                <button
+                  type="button"
+                  className="task-cancel-button"
+                  onClick={closeEditTaskModal}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="task-submit-button">
+                  Save Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

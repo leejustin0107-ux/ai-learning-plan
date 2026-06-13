@@ -1065,3 +1065,108 @@ select:focus-visible {
     flex-wrap: wrap;
   }
 }
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  border: none;
+  border-radius: 10px;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.4;
+}
+
+/* Add task icon */
+.add-task-button.icon-button {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.add-task-button.icon-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* Show / hide tasks icon */
+.task-dropdown-button.icon-button {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.task-dropdown-button.icon-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* Delete icon */
+.delete-button.icon-button {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.delete-button.icon-button:hover {
+  background-color: #dc2626;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Done icon */
+.done-button.icon-button {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.done-button.icon-button:hover {
+  background-color: #22c55e;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Reschedule icon */
+.reschedule-button.icon-button {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.reschedule-button.icon-button:hover:not(:disabled) {
+  background-color: #f59e0b;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.reschedule-button.icon-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.task-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.edit-button.icon-button {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.edit-button.icon-button:hover {
+  background-color: #0284c7;
+  color: #ffffff;
+  transform: translateY(-1px);
+}

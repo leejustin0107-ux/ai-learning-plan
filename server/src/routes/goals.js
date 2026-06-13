@@ -42,14 +42,53 @@ router.get('/', authenticate, async (req, res, next) => {
 router.patch('/:id', authenticate, async (req, res, next) => {
   try {
     const data = GoalInput.partial().parse(req.body);
+
+    const allowedFields = ['title', 'description', 'deadline'];
+
+    const updates = [];
+    const values = [];
+
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(data, field)) {
+        values.push(data[field]);
+        updates.push(`${field} = $${values.length}`);
+      }
+    });
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        error: 'No valid fields provided for update',
+      });
+    }
+
+    const userId = req.user.id || req.user.userId;
+
+    values.push(req.params.id);
+    values.push(userId);
+
+    const goalIdIndex = values.length - 1;
+    const userIdIndex = values.length;
+
     const goal = await db.query(
-      'UPDATE goals SET title = COALESCE($1, title), description = COALESCE($2, description), deadline = COALESCE($3, deadline) WHERE id = $4 AND user_id = $5 RETURNING *',
-      [data.title, data.description, data.deadline, req.params.id, req.user.id]
+      `
+      UPDATE goals
+      SET ${updates.join(', ')}
+      WHERE id = $${goalIdIndex}
+        AND user_id = $${userIdIndex}
+      RETURNING *;
+      `,
+      values
     );
-    if (!goal.rows.length) return res.status(404).json({ error: 'Goal tidak ditemukan' });
-    res.json(goal.rows[0]);
+
+    if (!goal.rows.length) {
+      return res.status(404).json({
+        error: 'Goal not found',
+      });
+    }
+
+    return res.json(goal.rows[0]);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
  
