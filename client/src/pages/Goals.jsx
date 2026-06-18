@@ -35,6 +35,7 @@ export default function Goals() {
   });
 
   const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTaskGoalDeadline, setEditingTaskGoalDeadline] = useState('');
   const [taskEditForm, setTaskEditForm] = useState({
     title: '',
     duration_estimate: 25,
@@ -43,6 +44,7 @@ export default function Goals() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const todayDate = getTodayDateString();
 
   const weekStart = '2026-05-11';
 
@@ -61,12 +63,26 @@ export default function Goals() {
 
     const form = taskForms[goalId];
 
-    if (!form?.title) {
-      alert('Task title is required');
-      return;
-    }
-
     try {
+      if (!form?.title) {
+        alert('Task title is required');
+        return;
+      }
+
+      const selectedTaskDate = taskForms[goalId]?.planned_date;
+      const currentGoal = goals.find((goal) => goal.id === goalId);
+      const goalDeadline = toDateInputValue(currentGoal?.deadline);
+
+      if (selectedTaskDate && selectedTaskDate < todayDate) {
+        setError('Task date cannot be before today.');
+        return;
+      }
+
+      if (goalDeadline && selectedTaskDate > goalDeadline) {
+        setError('Task date cannot be after the goal deadline.');
+        return;
+      }
+
       const createdTask = await api.post('/tasks', {
         goal_id: goalId,
         title: form.title,
@@ -149,6 +165,10 @@ export default function Goals() {
     e.preventDefault();
 
     try {
+    if (deadline && deadline < todayDate) {
+      setError('Goal deadline cannot be before today.');
+      return;
+    }
     const newGoal = await api.post('/goals', {
       title,
       deadline: deadline || undefined,
@@ -278,6 +298,35 @@ function closeEditGoalModal() {
     return 'ongoing';
   }
 
+  function getTodayDateString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function toDateInputValue(value) {
+    if (!value) return '';
+
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
   function getTaskStatus(task) {
     if (task.status === 'done' || task.status === 'finished') {
       return 'finished';
@@ -370,6 +419,11 @@ function closeEditGoalModal() {
         payload.deadline = goalEditForm.deadline;
       }
 
+      if (goalEditForm.deadline && goalEditForm.deadline < todayDate) {
+        setError('Goal deadline cannot be before today.');
+        return;
+      }
+
       await api.patch(`/goals/${editingGoalId}`, payload);
 
       closeEditGoalModal();
@@ -380,8 +434,10 @@ function closeEditGoalModal() {
     }
   }
 
-  function openEditTaskModal(task) {
+  function openEditTaskModal(task, goal) {
     setEditingTaskId(task.id);
+    setEditingTaskGoalDeadline(toDateInputValue(goal.deadline));
+
     setTaskEditForm({
       title: task.title || '',
       duration_estimate: task.duration_estimate || 25,
@@ -392,6 +448,7 @@ function closeEditGoalModal() {
 
   function closeEditTaskModal() {
     setEditingTaskId(null);
+    setEditingTaskGoalDeadline('');
     setTaskEditForm({
       title: '',
       duration_estimate: 25,
@@ -422,6 +479,19 @@ function closeEditGoalModal() {
 
     if (!taskEditForm.planned_slot) {
       setError('Planned slot is required.');
+      return;
+    }
+
+    if (taskEditForm.planned_date && taskEditForm.planned_date < todayDate) {
+      setError('Task date cannot be before today.');
+      return;
+    }
+
+    if (
+      editingTaskGoalDeadline &&
+      taskEditForm.planned_date > editingTaskGoalDeadline
+    ) {
+      setError('Task date cannot be after the goal deadline.');
       return;
     }
 
@@ -571,6 +641,7 @@ function closeEditGoalModal() {
                 <input
                   type="date"
                   value={deadline}
+                  min={todayDate}
                   onChange={(e) => setDeadline(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -694,7 +765,7 @@ function closeEditGoalModal() {
                             <button
                               type="button"
                               className="icon-button edit-button"
-                              onClick={() => openEditTaskModal(task)}
+                              onClick={() => openEditTaskModal(task, goal)}
                               aria-label={`Edit task "${task.title}"`}
                               title="Edit task"
                             >
@@ -843,6 +914,8 @@ function closeEditGoalModal() {
                         <input
                           type="date"
                           value={taskForms[goal.id]?.planned_date || ''}
+                          min={todayDate}
+                          max={toDateInputValue(goal.deadline) || undefined}
                           onChange={(e) =>
                             handleTaskFormChange(goal.id, 'planned_date', e.target.value)
                           }
@@ -975,6 +1048,7 @@ function closeEditGoalModal() {
                   id="edit-goal-deadline"
                   type="date"
                   value={goalEditForm.deadline}
+                  min={todayDate}
                   onChange={(e) =>
                     setGoalEditForm((prev) => ({
                       ...prev,
@@ -1051,6 +1125,8 @@ function closeEditGoalModal() {
                   id="edit-task-date"
                   type="date"
                   value={taskEditForm.planned_date}
+                  min={todayDate}
+                  max={editingTaskGoalDeadline || undefined}
                   onChange={(e) =>
                     setTaskEditForm((prev) => ({
                       ...prev,
