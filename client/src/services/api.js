@@ -1,5 +1,8 @@
 const BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || '/api'
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD
+    ? 'https://planit-backend-4n20.onrender.com/api'
+    : '/api')
 ).replace(/\/$/, '');
 async function request(path, options = {}) {
   const token = localStorage.getItem('token');
