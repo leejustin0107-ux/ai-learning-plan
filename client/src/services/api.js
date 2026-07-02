@@ -53,3 +53,35 @@ export const api = {
   patch: (path, body) => request(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path) => request(path, { method: 'DELETE' }),
 };
+
+const cache = new Map();
+
+export async function getCached(path, ttlMs = 30000) {
+  const cached = cache.get(path);
+
+  if (cached && Date.now() - cached.time < ttlMs) {
+    return cached.data;
+  }
+
+  const data = await api.get(path);
+
+  cache.set(path, {
+    data,
+    time: Date.now(),
+  });
+
+  return data;
+}
+
+export function clearApiCache(pathPrefix = '') {
+  if (!pathPrefix) {
+    cache.clear();
+    return;
+  }
+
+  for (const key of cache.keys()) {
+    if (key.startsWith(pathPrefix)) {
+      cache.delete(key);
+    }
+  }
+}

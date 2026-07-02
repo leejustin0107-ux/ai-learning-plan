@@ -1,6 +1,4 @@
-// TODO: Implementasikan routing dan layout.
-// Lihat modul Scaffolding — sub modul "Routing, Layout & UI Dasar".
-
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary'
 import MainLayout from './layouts/MainLayout';
@@ -8,8 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Goals from './pages/Goals';
-import Calendar from './pages/Calendar';
-import Progress from './pages/Progress';
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Progress = lazy(() => import('./pages/Progress'));
 import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }) {
@@ -26,8 +24,23 @@ export default function App() {
           <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/goals" element={<Goals />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/progress" element={<Progress />} />
+            <Route
+              path="/calendar"
+              element={
+                <Suspense fallback={<p className="page-loading">Loading calendar...</p>}>
+                  <Calendar />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/progress"
+              element={
+                <Suspense fallback={<p className="page-loading">Loading progress...</p>}>
+                  <Progress />
+                </Suspense>
+              }
+            />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>

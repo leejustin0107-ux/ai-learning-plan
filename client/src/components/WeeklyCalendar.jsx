@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, getCached, clearApiCache } from '../services/api';
 import ErrorState from './ErrorState';
 import { PageSkeleton } from './Skeleton';
 import {
@@ -103,7 +103,7 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
       setLoading(true);
       setError(null);
 
-      const data = await api.get(`/tasks?week_start=${weekStart}`);
+      const data = await getCached(`/tasks?week_start=${weekStart}`, 30000);
       setTasksByDay(data.tasks || {});
     } catch (err) {
       console.error('Failed to fetch weekly tasks:', err);
@@ -146,6 +146,7 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
         planned_slot: newSlot,
       });
 
+      clearApiCache('/tasks');
       await fetchWeekTasks();
     } catch (err) {
       console.error(err);
