@@ -12,41 +12,87 @@ const { getCurrentWeek } = require('../utils/week');
 
 router.post('/tasks', authenticate, async (req, res, next) => {
   try {
-  const TaskInput = z.object({
-    goal_id: z.string().uuid(),
-    title: z.string().min(1),
-    description: z.string().optional(),
-    duration_estimate: z.number().min(25).max(90),
-    planned_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    planned_slot: z.enum(['morning', 'afternoon', 'evening']),
-    source: z.enum(['manual', 'ai']).default('manual'),
-    rationale: z.string().optional(),
-  });
+    const TaskInput = z.object({
+      goal_id: z.string().uuid(),
+      title: z.string().min(1),
+      description: z.string().optional(),
+      duration_estimate: z.number().int().min(25).max(90),
+      planned_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      planned_slot: z.enum(['morning', 'afternoon', 'evening']),
+      source: z.enum(['manual', 'ai']).default('manual'),
+      rationale: z.string().optional(),
+      idempotency_key: z.string().min(1).max(255).optional(),
+    });
 
-  const data = TaskInput.parse(req.body);
+    const data = TaskInput.parse(req.body);
 
-  //check if goal belongs to user
-  const goalCheck = await db.query(
-    `SELECT id
-    FROM goals
-    where id = $1 AND user_id = $2`,
-    [data.goal_id, req.user.id]
-  );
+    // Check if goal belongs to user
+    const goalCheck = await db.query(
+      `SELECT id
+       FROM goals
+       WHERE id = $1 AND user_id = $2`,
+      [data.goal_id, req.user.id]
+    );
 
-  if (goalCheck.rows.length === 0) {
-    return res.status(404).json({error: 'Goal not found'});
-  }
+    if (goalCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Goal not found' });
+    }
 
-  const task = await Task.create(data);
+    if (data.idempotency_key) {
+      const existingTask = await db.query(
+        `SELECT t.*
+         FROM tasks t
+         JOIN goals g ON t.goal_id = g.id
+         WHERE g.user_id = $1
+         AND t.goal_id = $2
+         AND t.idempotency_key = $3
+         LIMIT 1`,
+        [req.user.id, data.goal_id, data.idempotency_key]
+      );
 
-  logger.info({
-    request_id: req.requestId,
-    action: 'task_created',
-    source: data.source,
-    task_id: task.id,
-  });
+      if (existingTask.rows.length > 0) {
+        return res.status(200).json({
+          ...existingTask.rows[0],
+          idempotent: true,
+        });
+      }
+    }
 
-  res.status(201).json(task)
+    try {
+      const task = await Task.create(data);
+
+      logger.info({
+        request_id: req.requestId,
+        action: 'task_created',
+        source: data.source,
+        task_id: task.id,
+      });
+
+      return res.status(201).json(task);
+    } catch (err) {
+      
+      if (err.code === '23505' && data.idempotency_key) {
+        const existingTask = await db.query(
+          `SELECT t.*
+           FROM tasks t
+           JOIN goals g ON t.goal_id = g.id
+           WHERE g.user_id = $1
+           AND t.goal_id = $2
+           AND t.idempotency_key = $3
+           LIMIT 1`,
+          [req.user.id, data.goal_id, data.idempotency_key]
+        );
+
+        if (existingTask.rows.length > 0) {
+          return res.status(200).json({
+            ...existingTask.rows[0],
+            idempotent: true,
+          });
+        }
+      }
+
+      throw err;
+    }
   } catch (err) {
     next(err);
   }

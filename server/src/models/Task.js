@@ -18,8 +18,19 @@ async function findByWeekForUser(userId, weekStart) {
 async function create(data) {
   const result = await db.query(
     `INSERT INTO tasks
-     (goal_id, title, description, duration_estimate, planned_date, planned_slot, source, rationale, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'todo')
+     (
+       goal_id,
+       title,
+       description,
+       duration_estimate,
+       planned_date,
+       planned_slot,
+       source,
+       rationale,
+       idempotency_key,
+       status
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'todo')
      RETURNING *`,
     [
       data.goal_id,
@@ -30,6 +41,7 @@ async function create(data) {
       data.planned_slot,
       data.source || 'manual',
       data.rationale || null,
+      data.idempotency_key || null,
     ]
   );
 

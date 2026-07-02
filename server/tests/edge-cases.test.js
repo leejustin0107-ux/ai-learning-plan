@@ -159,6 +159,57 @@ describe('Edge Cases', () => {
     expect(res.status).toBe(404);
   });
 
+  test('accepting the same AI task twice with the same idempotency key does not duplicate task', async () => {
+    const goalRes = await request(app)
+      .post('/api/goals')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Idempotency Test Goal',
+        description: 'Goal for testing duplicate AI task accept',
+        deadline: getFutureDate(14),
+      });
+
+    const goalId = goalRes.body.id || goalRes.body.goal?.id;
+
+    const idempotencyKey = `ai-task-test-${Date.now()}`;
+
+    const payload = {
+      goal_id: goalId,
+      title: 'Idempotent AI Task',
+      description: 'This task should only be created once.',
+      duration_estimate: 30,
+      planned_date: getFutureDate(7),
+      planned_slot: 'morning',
+      source: 'ai',
+      rationale: 'Suggested by AI for testing.',
+      idempotency_key: idempotencyKey,
+    };
+
+    const firstRes = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send(payload);
+
+    const secondRes = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send(payload);
+
+    expect(firstRes.status).toBe(201);
+    expect(secondRes.status).toBe(200);
+    expect(secondRes.body.idempotent).toBe(true);
+
+    const check = await db.query(
+      `SELECT COUNT(*)::int AS count
+      FROM tasks
+      WHERE goal_id = $1
+      AND idempotency_key = $2`,
+      [goalId, idempotencyKey]
+    );
+
+    expect(check.rows[0].count).toBe(1);
+  });
+
   test('export without week_start returns 400', async () => {
     const res = await request(app)
       .get('/api/export/weekly')

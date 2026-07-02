@@ -59,9 +59,27 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
     }
   }
  
+  function createTaskIdempotencyKey(task) {
+    return [
+      'ai-task',
+      goalId,
+      task.title,
+      task.planned_date,
+      task.planned_slot,
+      task.duration_estimate,
+    ]
+      .join(':')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .slice(0, 255);
+  }
+
   async function handleAccept(task, index) {
-    // Prevent duplicate saves
+    
     if (acceptedIndexes.includes(index)) return;
+    if (savingIndex === index) return;
+
+    const idempotencyKey = createTaskIdempotencyKey(task);
 
     setSavingIndex(index);
     setError(null);
@@ -76,9 +94,13 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
         planned_slot: task.planned_slot,
         source: 'ai',
         rationale: task.rationale,
+        idempotency_key: idempotencyKey,
       });
 
-      setAcceptedIndexes((prev) => [...prev, index]);
+      setAcceptedIndexes((prev) => {
+        if (prev.includes(index)) return prev;
+        return [...prev, index];
+      });
 
       if (onAccept) {
         onAccept(created);
@@ -173,13 +195,13 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
                 <button
                   type="button"
                   onClick={() => handleAccept(task, index)}
-                  disabled={isAccepted || isSaving}
+                  disabled={savingIndex === index || acceptedIndexes.includes(index)}
                 >
-                  {isSaving
-                    ? 'Saving...'
-                    : isAccepted
+                  {savingIndex === index
+                    ? 'Accepting...'
+                    : acceptedIndexes.includes(index)
                       ? 'Accepted'
-                      : '✅ Accept'}
+                      : 'Accept'}
                 </button>
 
                 <button

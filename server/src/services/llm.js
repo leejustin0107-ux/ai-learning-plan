@@ -7,6 +7,7 @@ const path = require('path');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 const { aiRequestCount } = require('../utils/metrics');
+const breaker = require('./circuitBreaker');
 
 // Schema untuk validasi output AI
 const TaskSchema = z.object({
@@ -108,52 +109,54 @@ function loadSystemPrompt() {
 const genAI = new GoogleGenerativeAI(config.geminiKey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 async function callLLMReal(type, context) {
-  const systemPrompt = loadSystemPrompt();
-  const safeContext = sanitizeContext(context);
-  const userPrompt = `Type: ${type}\nContext: ${JSON.stringify(safeContext)}`;
+  return breaker.execute(async () => {
+    const systemPrompt = loadSystemPrompt();
+    const safeContext = sanitizeContext(context);
+    const userPrompt = `Type: ${type}\nContext: ${JSON.stringify(safeContext)}`;
 
-  const start = Date.now();
+    const start = Date.now();
 
-  try {
-    const result = await model.generateContent([systemPrompt, userPrompt]);
-    const response = result.response;
-    const durationMs = Date.now() - start;
+    try {
+      const result = await model.generateContent([systemPrompt, userPrompt]);
+      const response = result.response;
+      const durationMs = Date.now() - start;
 
-    const tokenUsage = {
-      input_tokens: response.usageMetadata?.promptTokenCount || 0,
-      output_tokens: response.usageMetadata?.candidatesTokenCount || 0,
-    };
+      const tokenUsage = {
+        input_tokens: response.usageMetadata?.promptTokenCount || 0,
+        output_tokens: response.usageMetadata?.candidatesTokenCount || 0,
+      };
 
-    aiRequestCount.inc({ type, status: 'success' });
+      aiRequestCount.inc({ type, status: 'success' });
 
-    logger.info({
-      action: 'llm_call',
-      type,
-      duration_ms: durationMs,
-      ...tokenUsage,
-    });
+      logger.info({
+        action: 'llm_call',
+        type,
+        duration_ms: durationMs,
+        ...tokenUsage,
+      });
 
-    return response.text();
-  } catch (err) {
-    aiRequestCount.inc({ type, status: 'error' });
+      return response.text();
+    } catch (err) {
+      aiRequestCount.inc({ type, status: 'error' });
 
-    logger.error({
-      action: 'llm_call_error',
-      type,
-      error_message: err.message,
-      duration_ms: Date.now() - start,
-    });
+      logger.error({
+        action: 'llm_call_error',
+        type,
+        error_message: err.message,
+        duration_ms: Date.now() - start,
+      });
 
-    if (err.message?.includes('503') || err.message?.includes('high demand')) {
-      const serviceError = new Error(
-        'AI service is temporarily busy. Please try again in a few moments.'
-      );
-      serviceError.statusCode = 503;
-      throw serviceError;
+      if (err.message?.includes('503') || err.message?.includes('high demand')) {
+        const serviceError = new Error(
+          'AI service is temporarily busy. Please try again in a few moments.'
+        );
+        serviceError.statusCode = 503;
+        throw serviceError;
+      }
+
+      throw err;
     }
-
-    throw err;
-  }
+  });
 }
 
 
