@@ -1,8 +1,8 @@
-# One-Pager Case Study: AI Learning Plan MVP
+# One-Pager Case Study: PlanIt MVP
 
 ## Ringkasan
 
-AI Learning Plan adalah aplikasi web yang membantu pengguna mengubah goal belajar besar menjadi task-task kecil yang lebih mudah dikerjakan. Aplikasi ini mendukung pembuatan task manual, AI task suggestion, weekly calendar, AI reschedule untuk task overdue, dan progress tracking mingguan.
+PlanIt adalah aplikasi web yang membantu pengguna mengubah goal belajar besar menjadi task-task kecil yang lebih mudah dikerjakan. Aplikasi ini mendukung pembuatan task manual, AI task suggestion, weekly calendar, AI reschedule untuk task overdue, dan progress tracking mingguan.
 
 MVP ini dibuat untuk membantu mahasiswa atau self-learner yang sering kesulitan menentukan langkah belajar berikutnya, mengatur jadwal belajar, dan melihat progress secara terukur.
 
@@ -84,7 +84,7 @@ Dampak yang dapat diukur:
 
 ## Result
 
-AI Learning Plan MVP berhasil mendukung alur belajar end-to-end:
+PlanIt MVP berhasil mendukung alur belajar end-to-end:
 
 **Goal → Task Breakdown → Weekly Calendar → AI Reschedule → Progress Tracking**
 

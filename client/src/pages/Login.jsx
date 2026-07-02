@@ -54,8 +54,15 @@ export default function Login() {
     <div className="auth-page">
       <section className="auth-card" aria-labelledby="login-title">
         <div className="auth-header">
-          <h1 id="login-title">Welcome Back</h1>
-          <p>Log in to continue planning your learning goals.</p>
+          <p className="auth-eyebrow">AI STUDY PLANNER</p>
+
+          <h1 id="login-title">
+            Welcome back to <span>PlanIt</span>
+          </h1>
+
+          <p>
+            Organize your goals, plan your week, and keep your learning progress on track.
+          </p>
         </div>
 
         {error && (

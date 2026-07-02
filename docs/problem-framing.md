@@ -1,4 +1,4 @@
-# Problem Framing — AI Learning Plan
+# Problem Framing — PlanIt
 > Lihat modul Cycle 1 — sub modul "Problem Framing Document".
 
 ## Problem

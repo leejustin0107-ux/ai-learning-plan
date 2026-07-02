@@ -30,7 +30,7 @@ export default function MainLayout() {
     <div className={`app-layout ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
       <nav id="app-sidebar" className="sidebar" aria-label="Main navigation">
         <div className="sidebar-header">
-          {sidebarOpen && <h2>AI Learning Plan</h2>}
+          {sidebarOpen && <h2>PlanIt</h2>}
 
           <button
             type="button"

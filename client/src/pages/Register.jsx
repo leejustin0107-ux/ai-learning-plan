@@ -67,8 +67,15 @@ export default function Register() {
     <div className="auth-page">
       <section className="auth-card" aria-labelledby="register-title">
         <div className="auth-header">
-          <h1 id="register-title">Create account</h1>
-          <p>Start planning your weekly learning goals and tasks.</p>
+          <p className="auth-eyebrow">AI STUDY PLANNER</p>
+
+          <h1 id="register-title">
+            Start planning with <span>PlanIt</span>
+          </h1>
+
+          <p>
+            Turn your learning goals into weekly tasks with help from your AI study buddy.
+          </p>
         </div>
 
         {error && (

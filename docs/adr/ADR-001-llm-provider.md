@@ -6,7 +6,7 @@ Accepted
 
 ## Konteks
 
-Aplikasi AI Learning Plan membutuhkan fitur AI suggestion engine yang dapat membantu pengguna memecah goal belajar menjadi task mingguan yang lebih kecil, realistis, dan sesuai dengan preferensi pengguna.
+Aplikasi PlanIt membutuhkan fitur AI suggestion engine yang dapat membantu pengguna memecah goal belajar menjadi task mingguan yang lebih kecil, realistis, dan sesuai dengan preferensi pengguna.
 
 Fitur ini membutuhkan model AI yang dapat menerima konteks seperti goal, availability, preferred time, weekly target hours, dan existing tasks, lalu menghasilkan output berupa daftar task yang terstruktur.
 

@@ -6,7 +6,7 @@ Accepted
 
 ## Konteks
 
-AI Learning Plan saat ini sudah berkembang menjadi aplikasi MVP yang memiliki beberapa fitur utama, yaitu goal management, task management, AI task suggestion, weekly calendar, AI reschedule, dan progress tracking.
+PlanIt saat ini sudah berkembang menjadi aplikasi MVP yang memiliki beberapa fitur utama, yaitu goal management, task management, AI task suggestion, weekly calendar, AI reschedule, dan progress tracking.
 
 Pada frontend, beberapa state perlu dikelola, seperti daftar goals, daftar tasks, task yang dipilih di calendar popup, AI suggestion, AI reschedule suggestion, refresh calendar, dan weekly progress. Namun, sebagian besar state masih digunakan secara lokal pada halaman tertentu seperti Goals page, Calendar page, dan Progress page.
 

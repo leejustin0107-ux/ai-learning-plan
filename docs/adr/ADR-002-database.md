@@ -6,7 +6,7 @@ Accepted
 
 ## Konteks
 
-Aplikasi AI Learning Plan membutuhkan penyimpanan data yang terstruktur untuk user, profile, goals, tasks, dan AI recommendations.
+Aplikasi PlanIt membutuhkan penyimpanan data yang terstruktur untuk user, profile, goals, tasks, dan AI recommendations.
 
 Data tersebut saling berhubungan. Contohnya, satu user memiliki banyak goals, satu goal memiliki banyak tasks, dan AI recommendations perlu disimpan untuk kebutuhan audit atau evaluasi output AI.
 

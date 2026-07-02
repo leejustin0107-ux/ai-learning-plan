@@ -1,4 +1,4 @@
-# Portfolio Write-up: AI Learning Plan MVP
+# Portfolio Write-up: PlanIt MVP
 
 ## Problem
 
@@ -6,7 +6,7 @@ Banyak mahasiswa mengalami kesulitan ketika harus mengubah goal belajar yang bes
 
 Masalah ini menjadi lebih sulit ketika pengguna memiliki waktu belajar yang terbatas. Setiap pengguna bisa memiliki availability yang berbeda, preferred time yang berbeda, serta target jam belajar mingguan yang berbeda. Tanpa sistem perencanaan yang terstruktur, task mudah menjadi overdue, progress sulit dipantau, dan pengguna dapat kehilangan motivasi karena tidak melihat perkembangan yang jelas.
 
-MVP AI Learning Plan dibuat untuk menyelesaikan masalah tersebut dengan menyediakan aplikasi web yang membantu pengguna:
+MVP PlanIt dibuat untuk menyelesaikan masalah tersebut dengan menyediakan aplikasi web yang membantu pengguna:
 
 * Membuat goal belajar.
 * Membuat task secara manual.
@@ -22,7 +22,7 @@ Tujuan utama MVP ini bukan hanya membuat task, tetapi mendukung alur belajar yan
 
 ## Approach
 
-AI Learning Plan MVP dibangun sebagai aplikasi full-stack menggunakan React, Node.js, Express.js, PostgreSQL, dan Gemini API. Aplikasi menggunakan arsitektur client-server, di mana frontend menangani interaksi pengguna dan backend menangani autentikasi, pengelolaan data, validasi, AI context building, serta progress calculation.
+PlanIt MVP dibangun sebagai aplikasi full-stack menggunakan React, Node.js, Express.js, PostgreSQL, dan Gemini API. Aplikasi menggunakan arsitektur client-server, di mana frontend menangani interaksi pengguna dan backend menangani autentikasi, pengelolaan data, validasi, AI context building, serta progress calculation.
 
 ### Frontend Approach
 
@@ -169,7 +169,7 @@ Dengan kombinasi fitur ini, MVP membantu pengguna menjalankan proses belajar yan
 
 ## Summary
 
-AI Learning Plan MVP menyelesaikan masalah utama dalam mengubah goal belajar yang besar menjadi task mingguan yang lebih kecil, terjadwal, dan dapat dipantau. Aplikasi ini menggabungkan manual task management, AI task suggestion, weekly calendar, AI reschedule, dan progress tracking dalam satu workflow.
+PlanIt MVP menyelesaikan masalah utama dalam mengubah goal belajar yang besar menjadi task mingguan yang lebih kecil, terjadwal, dan dapat dipantau. Aplikasi ini menggabungkan manual task management, AI task suggestion, weekly calendar, AI reschedule, dan progress tracking dalam satu workflow.
 
 Pendekatan teknis yang dipilih meliputi React local state untuk menjaga kompleksitas frontend tetap sederhana, Express.js dan PostgreSQL untuk backend dan data relasional, Gemini API untuk fitur AI, validasi schema untuk menjaga kualitas output AI, serta progress snapshot untuk mengukur pencapaian mingguan.
 

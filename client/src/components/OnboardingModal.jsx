@@ -71,7 +71,7 @@ export default function OnboardingModal({ onClose }) {
 
         <div className="onboarding-header">
           <span className="onboarding-badge">New User Guide</span>
-          <h2 id="onboarding-title">Welcome to AI Learning Plan</h2>
+          <h2 id="onboarding-title">Welcome to PlanIt</h2>
           <p>
             Before creating goals, set your profile preferences so the AI can
             generate better learning tasks.

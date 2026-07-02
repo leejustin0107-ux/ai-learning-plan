@@ -6,7 +6,7 @@ Accepted
 
 ## Konteks
 
-Aplikasi AI Learning Plan membutuhkan backend API untuk menangani autentikasi, profile, goals, tasks, dan AI suggestion engine.
+Aplikasi PlanIt membutuhkan backend API untuk menangani autentikasi, profile, goals, tasks, dan AI suggestion engine.
 
 Backend harus dapat menerima request dari frontend React, mengakses PostgreSQL, melakukan validasi input, memverifikasi JWT, dan memanggil layanan LLM.
 

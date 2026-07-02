@@ -232,3 +232,37 @@ input:focus-visible {
 .password-toggle-button svg {
   stroke-width: 2.4;
 }
+
+.auth-header {
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.auth-eyebrow {
+  margin: 0 0 12px;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.auth-header h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.auth-header h1 span {
+  color: #2563eb;
+}
+
+.auth-header > p:last-child {
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}

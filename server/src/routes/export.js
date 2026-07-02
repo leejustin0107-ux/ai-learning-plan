@@ -74,10 +74,10 @@ function buildWeeklyICalendar({ weekStart, tasks }) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//AI Learning Plan//Weekly Export//EN',
+    'PRODID:-//PlanIt//Weekly Export//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:AI Learning Plan - Week ${weekStart}`,
+    `X-WR-CALNAME:PlanIt - Week ${weekStart}`,
   ];
 
   tasks.forEach((task) => {

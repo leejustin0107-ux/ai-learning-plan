@@ -2,7 +2,7 @@
 
 ## Tujuan
 
-Dokumen ini menjelaskan estimasi biaya penggunaan AI untuk fitur AI Learning Plan, khususnya fitur:
+Dokumen ini menjelaskan estimasi biaya penggunaan AI untuk fitur PlanIt, khususnya fitur:
 
 * AI task suggestion
 * AI reschedule suggestion

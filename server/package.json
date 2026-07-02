@@ -1,7 +1,7 @@
 {
   "name": "ai-learning-plan-server",
   "version": "0.0.1",
-  "description": "Backend for AI Learning Plan — Dicoding Bootcamp Capstone",
+  "description": "Backend for PlanIt — Dicoding Bootcamp Capstone",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/index.js",

@@ -1,6 +1,6 @@
-# AI Learning Plan
+# PlanIt
 
-AI Learning Plan adalah aplikasi web untuk membantu pengguna membuat goal belajar, mengatur task mingguan, memecah goal besar menjadi task kecil, dan mendapatkan bantuan AI untuk membuat task breakdown serta menjadwalkan ulang task yang overdue.
+PlanIt adalah aplikasi web untuk membantu pengguna membuat goal belajar, mengatur task mingguan, memecah goal besar menjadi task kecil, dan mendapatkan bantuan AI untuk membuat task breakdown serta menjadwalkan ulang task yang overdue.
 
 Aplikasi ini mendukung perencanaan belajar mingguan berdasarkan goal, availability, preferred time, target jam belajar, dan progress pengguna.
 
