@@ -12,6 +12,12 @@ const FOCUSABLE_SELECTORS = [
 export default function useFocusTrap(isActive, onEscape) {
   const containerRef = useRef(null);
   const previousFocusedElementRef = useRef(null);
+  const onEscapeRef = useRef(onEscape);
+
+  // Keep latest onEscape without re-running the focus trap effect
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -43,16 +49,16 @@ export default function useFocusTrap(isActive, onEscape) {
       const firstElement = focusableElements[0];
 
       if (firstElement) {
-        firstElement.focus();
+        firstElement.focus({ preventScroll: true });
       } else {
-        container.focus();
+        container.focus({ preventScroll: true });
       }
     }
 
     function handleKeyDown(event) {
-      if (event.key === 'Escape' && onEscape) {
+      if (event.key === 'Escape' && onEscapeRef.current) {
         event.preventDefault();
-        onEscape();
+        onEscapeRef.current();
         return;
       }
 
@@ -62,7 +68,7 @@ export default function useFocusTrap(isActive, onEscape) {
 
       if (focusableElements.length === 0) {
         event.preventDefault();
-        container.focus();
+        container.focus({ preventScroll: true });
         return;
       }
 
@@ -71,19 +77,19 @@ export default function useFocusTrap(isActive, onEscape) {
 
       if (!container.contains(document.activeElement)) {
         event.preventDefault();
-        firstElement.focus();
+        firstElement.focus({ preventScroll: true });
         return;
       }
 
       if (event.shiftKey && document.activeElement === firstElement) {
         event.preventDefault();
-        lastElement.focus();
+        lastElement.focus({ preventScroll: true });
         return;
       }
 
       if (!event.shiftKey && document.activeElement === lastElement) {
         event.preventDefault();
-        firstElement.focus();
+        firstElement.focus({ preventScroll: true });
       }
     }
 
@@ -97,10 +103,10 @@ export default function useFocusTrap(isActive, onEscape) {
       const previousFocusedElement = previousFocusedElementRef.current;
 
       if (previousFocusedElement && previousFocusedElement.focus) {
-        previousFocusedElement.focus();
+        previousFocusedElement.focus({ preventScroll: true });
       }
     };
-  }, [isActive, onEscape]);
+  }, [isActive]);
 
   return containerRef;
 }
