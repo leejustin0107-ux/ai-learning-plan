@@ -103,7 +103,7 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
       setLoading(true);
       setError(null);
 
-      const data = await getCached(`/tasks?week_start=${weekStart}`, 30000);
+      const data = await getCached(`/tasks?week_start=${weekStart}`, 5000);
       setTasksByDay(data.tasks || {});
     } catch (err) {
       console.error('Failed to fetch weekly tasks:', err);

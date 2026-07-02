@@ -343,8 +343,6 @@ http://localhost:5173
 
 PlanIt menggunakan client-server architecture. React frontend berkomunikasi dengan Express backend melalui REST API. Backend bertanggung jawab untuk authentication, authorization, validation, database operations, progress calculation, AI integration, observability, dan export.
 
-![Architecture Diagram](docs/architecture.png)
-
 ```text
 User
  |
