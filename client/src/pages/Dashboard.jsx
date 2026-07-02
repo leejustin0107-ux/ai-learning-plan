@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -112,6 +112,7 @@ function getSlotOrder(slot) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [goals, setGoals] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
@@ -168,7 +169,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [location.key]);
 
   const plannedHours = Number(progress?.planned_hours || 0);
   const completedHours = Number(progress?.completed_hours || 0);
@@ -181,9 +182,12 @@ export default function Dashboard() {
 
   const finishedTasks = allTasks.filter((task) => isFinishedTask(task));
 
-  const overdueTasks = allTasks.filter(
-    (task) => getTaskStatus(task) === 'overdue'
-  );
+  const overdueTasks = allTasks.filter((task) => {
+    if (!task?.id) return false;
+    if (isFinishedTask(task)) return false;
+
+    return getTaskStatus(task) === 'overdue';
+  });
 
   const upcomingTasks = allTasks
     .filter((task) => getTaskStatus(task) === 'ongoing')

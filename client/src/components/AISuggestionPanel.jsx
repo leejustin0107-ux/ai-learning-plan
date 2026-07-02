@@ -4,6 +4,33 @@ import '../styles/aisuggestionpanel.css'
 import ErrorState from './ErrorState';
 import RationaleDisplay from './RationaleDisplay';
  
+function AISuggestionSkeleton() {
+  return (
+    <div className="ai-panel ai-skeleton-panel" aria-label="Loading AI suggestions">
+      <div className="ai-skeleton-header">
+        <div className="ai-skeleton-line ai-skeleton-title" />
+        <div className="ai-skeleton-line ai-skeleton-subtitle" />
+      </div>
+
+      <div className="ai-skeleton-list">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div className="ai-skeleton-card" key={index}>
+            <div className="ai-skeleton-line ai-skeleton-card-title" />
+            <div className="ai-skeleton-line ai-skeleton-card-text" />
+            <div className="ai-skeleton-line ai-skeleton-card-text short" />
+
+            <div className="ai-skeleton-meta-row">
+              <div className="ai-skeleton-pill" />
+              <div className="ai-skeleton-pill" />
+              <div className="ai-skeleton-pill" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AISuggestionPanel({ goalId, weekStart, onAccept }) {
   const [suggestions, setSuggestions] = useState(null);
   const [acceptedIndexes, setAcceptedIndexes] = useState([]);
@@ -68,11 +95,7 @@ function AISuggestionPanel({ goalId, weekStart, onAccept }) {
   }
  
   if (loading) {
-    return (
-      <div className="ai-panel">
-        <p>Loading AI suggestions...</p>
-      </div>
-    );
+    return <AISuggestionSkeleton />;
   }
 
   if (error) {

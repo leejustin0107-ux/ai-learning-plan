@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { api } from '../services/api';
 import WeeklyCalendar from '../components/WeeklyCalendar';
+import useFocusTrap from '../hooks/useFocusTrap';
 import '../styles/calendar.css';
 
 export default function Calendar() {
   const [selectedTask, setSelectedTask] = useState(null);
-  const [rescheduleSuggestion, setRescheduleSuggestion] = useState(null);
+  const [rescheduleRecommendation, setRescheduleRecommendation] = useState(null);
   const [rescheduling, setRescheduling] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const taskModalRef = useFocusTrap(Boolean(selectedTask), closeTaskPopup);
+
   function handleTaskClick(task) {
     setSelectedTask(task);
+    setRescheduleRecommendation(null);
   }
 
   function closeTaskPopup() {
     setSelectedTask(null);
+    setRescheduleRecommendation(null);
+    setRescheduling(false);
   }
 
   function handleSlotClick(date, slot) {
@@ -50,13 +56,13 @@ export default function Calendar() {
   async function handleRescheduleTask(taskId) {
     try {
       setRescheduling(true);
-      setRescheduleSuggestion(null);
+      setRescheduleRecommendation(null);
 
       const data = await api.post('/ai/plan/reschedule', {
         task_ids: [taskId],
       });
 
-      setRescheduleSuggestion(data.recommendation);
+      setRescheduleRecommendation(data.recommendation);
     } catch (err) {
       console.error('failed to reschedule task:', err);
       alert(err.message);
@@ -65,17 +71,17 @@ export default function Calendar() {
     }
   }
 
-  async function handleAcceptReschedule() {
-    if (!selectedTask || !rescheduleSuggestion) return;
+  async function handleAcceptReschedule(option) {
+    if (!selectedTask || !option) return;
 
     try {
       const data = await api.patch(`/tasks/${selectedTask.id}/schedule`, {
-        planned_date: rescheduleSuggestion.suggested_date,
-        planned_slot: rescheduleSuggestion.suggested_slot,
+        planned_date: option.suggested_date,
+        planned_slot: option.suggested_slot,
       });
 
       setSelectedTask(data.task);
-      setRescheduleSuggestion(null);
+      setRescheduleRecommendation(null);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
       console.error('failed to accept reschedule:', err);
@@ -84,7 +90,7 @@ export default function Calendar() {
   }
 
   function handleDeclineReschedule() {
-    setRescheduleSuggestion(null);
+    setRescheduleRecommendation(null);
   }
 
   function getTaskStatus(task) {
@@ -151,6 +157,7 @@ export default function Calendar() {
     return new Date(dateString).toLocaleDateString();
   }
 
+
   return (
     <div className="calendar-page">
       <h1>Weekly Calendar</h1>
@@ -164,110 +171,156 @@ export default function Calendar() {
 
       {selectedTask && (
         <div className="task-popup-overlay">
-          <div className="task-popup">
+          <div
+            ref={taskModalRef}
+            className="task-popup calendar-task-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="calendar-task-modal-title"
+            tabIndex={-1}
+          >
             <button
               type="button"
               className="task-popup-close"
               onClick={closeTaskPopup}
+              aria-label="Close task details"
+              title="Close"
             >
               ×
             </button>
 
-            <h2>{selectedTask.title}</h2>
-            <div className="task-popup-details">
-              <p>
-                <strong>Description:</strong>{' '}
-                {selectedTask.description || 'No description'}
-              </p>
+            <div className="calendar-task-modal-header">
+              <div>
+                <span className={`calendar-task-status-pill ${getTaskStatus(selectedTask)}`}>
+                  {getTaskStatus(selectedTask)}
+                </span>
 
-              <p>
-                <strong>Date:</strong> {formatDate(selectedTask.planned_date)}
-              </p>
+                <h2 id="calendar-task-modal-title">{selectedTask.title}</h2>
 
-              <p>
-                <strong>Slot:</strong> {selectedTask.planned_slot || 'No slot'}
-              </p>
-
-              <p>
-                <strong>Duration:</strong>{' '}
-                {selectedTask.duration_estimate
-                  ? `${selectedTask.duration_estimate} minutes`
-                  : 'No duration'}
-              </p>
-
-              <p>
-                <strong>Status:</strong> {getTaskStatus(selectedTask)}
-              </p>
-
-              <div className="task-popup-actions">
-                {getTaskStatus(selectedTask) === 'ongoing' && (
-                  <button 
-                    type="button" 
-                    className="done-button"
-                    onClick={() => handleMarkTaskDone(selectedTask.id)}
-                  >
-                    Mark as Done
-                  </button>
-                )}
-
-                {getTaskStatus(selectedTask) === 'overdue' && (
-                  <button
-                    type="button"
-                    className="reschedule-button"
-                    onClick={() => handleRescheduleTask(selectedTask.id)}
-                    disabled={rescheduling}
-                  >
-                    {rescheduling ? 'Rescheduling...' : 'Reschedule'}
-                  </button>
-                )}
-                
-                {rescheduleSuggestion && (
-                  <div className="reschedule-suggestion">
-                    <h3>AI Reschedule Suggestion</h3>
-
-                    <p>
-                      <strong>New Date:</strong> {rescheduleSuggestion.suggested_date}
-                    </p>
-
-                    <p>
-                      <strong>New Slot:</strong> {rescheduleSuggestion.suggested_slot}
-                    </p>
-
-                    <p>
-                      <strong>Reason:</strong> {rescheduleSuggestion.reason}
-                    </p>
-
-                    <div className="reschedule-actions">
-                      <button
-                        type="button"
-                        className="accept-button"
-                        onClick={handleAcceptReschedule}
-                      >
-                        Accept
-                      </button>
-
-                      <button
-                        type="button"
-                        className="decline-button"
-                        onClick={handleDeclineReschedule}
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {getTaskStatus(selectedTask) === 'finished' && (
-                  <button 
-                    type="button" 
-                    className="delete-button"
-                    onClick={() => handleDeleteTask(selectedTask.id)}
-                  >
-                    Delete Task
-                  </button>
-                )}
+                <p>
+                  {selectedTask.description || 'No description provided for this task.'}
+                </p>
               </div>
             </div>
+
+            <div className="calendar-task-detail-grid">
+              <div className="calendar-task-detail-card">
+                <span>Date</span>
+                <strong>{formatDate(selectedTask.planned_date)}</strong>
+              </div>
+
+              <div className="calendar-task-detail-card">
+                <span>Slot</span>
+                <strong>{selectedTask.planned_slot || 'No slot'}</strong>
+              </div>
+
+              <div className="calendar-task-detail-card">
+                <span>Duration</span>
+                <strong>
+                  {selectedTask.duration_estimate
+                    ? `${selectedTask.duration_estimate} min`
+                    : 'No duration'}
+                </strong>
+              </div>
+            </div>
+
+            <div className="calendar-task-modal-actions">
+              {getTaskStatus(selectedTask) !== 'finished' && (
+                <button
+                  type="button"
+                  className="calendar-modal-done-button"
+                  onClick={() => handleMarkTaskDone(selectedTask.id)}
+                >
+                  Mark as Done
+                </button>
+              )}
+
+              {getTaskStatus(selectedTask) === 'overdue' && (
+                <button
+                  type="button"
+                  className="calendar-modal-reschedule-button"
+                  onClick={() => handleRescheduleTask(selectedTask.id)}
+                  disabled={rescheduling}
+                >
+                  {rescheduling ? 'Generating options...' : 'AI Reschedule'}
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="calendar-modal-delete-button"
+                onClick={() => handleDeleteTask(selectedTask.id)}
+              >
+                Delete Task
+              </button>
+            </div>
+
+            {rescheduling && (
+              <div className="calendar-reschedule-panel">
+                <div className="calendar-reschedule-header">
+                  <div>
+                    <h3>Generating AI reschedule options...</h3>
+                    <p>Please wait while AI checks possible dates and slots.</p>
+                  </div>
+                </div>
+
+                <div className="calendar-reschedule-skeleton">
+                  <div />
+                  <div />
+                  <div />
+                </div>
+              </div>
+            )}
+
+            {rescheduleRecommendation?.options?.length > 0 && (
+              <div className="calendar-reschedule-panel">
+                <div className="calendar-reschedule-header">
+                  <div>
+                    <h3>AI Reschedule Options</h3>
+                    <p>Choose one option to update this task schedule.</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="calendar-reschedule-close-button"
+                    onClick={handleDeclineReschedule}
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="calendar-reschedule-option-list">
+                  {rescheduleRecommendation.options.map((option, index) => (
+                    <article
+                      className="calendar-reschedule-option-card"
+                      key={`${option.task_id}-${option.suggested_date}-${option.suggested_slot}-${index}`}
+                    >
+                      <div className="calendar-reschedule-option-top">
+                        <span>Option {index + 1}</span>
+
+                        <strong>
+                          {option.suggested_date} · {option.suggested_slot}
+                        </strong>
+                      </div>
+
+                      <ul className="calendar-reschedule-rationale-list">
+                        {option.rationale.map((reason, reasonIndex) => (
+                          <li key={reasonIndex}>{reason}</li>
+                        ))}
+                      </ul>
+
+                      <button
+                        type="button"
+                        className="calendar-reschedule-accept-button"
+                        onClick={() => handleAcceptReschedule(option)}
+                      >
+                        Accept this option
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

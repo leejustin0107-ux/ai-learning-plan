@@ -10,13 +10,69 @@ const Profile = require('../models/Profile');
 const Task = require('../models/Task');
 const AIRecommendation = require('../models/AIRecomendation');
 const { findOverdueTasks, findTasksByWeek, findTasksByIds } = require('../services/tasks');
-const { getCurrentWeekStart, getCurrentWeek, formatLocalDate } = require('../utils/week');
+const { getCurrentWeekStart, getCurrentWeek, getWeekEnd, formatLocalDate } = require('../utils/week');
 
 const SuggestInput = z.object({
   goal_id: z.string().uuid(),
   week_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+function filterValidRescheduleOptions(recommendation, overdueTasks, today) {
+  if (!recommendation || !Array.isArray(recommendation.options)) {
+    return null;
+  }
+
+  const validOptions = recommendation.options.filter((option) => {
+    const task = overdueTasks.find((item) => item.id === option.task_id);
+
+    if (!task) return false;
+
+    const goalDeadline = task.goal_deadline
+      ? formatLocalDate(task.goal_deadline)
+      : null;
+
+    if (option.suggested_date < today) {
+      return false;
+    }
+
+    if (goalDeadline && option.suggested_date > goalDeadline) {
+      return false;
+    }
+
+    return true;
+  });
+
+  if (validOptions.length === 0) {
+    return null;
+  }
+
+  return {
+    ...recommendation,
+    options: validOptions,
+  };
+}
+
+function validateSuggestionDateRange(suggestion, allowedStart, allowedEnd) {
+  if (!suggestion || !Array.isArray(suggestion.tasks)) {
+    return null;
+  }
+
+  const validTasks = suggestion.tasks.filter((task) => {
+    return (
+      task.planned_date >= allowedStart &&
+      task.planned_date <= allowedEnd
+    );
+  });
+
+  if (validTasks.length === 0) {
+    return null;
+  }
+
+  return {
+    ...suggestion,
+    tasks: validTasks,
+  };
+}
  
 router.post('/plan/suggest', authenticate, async (req, res, next) => {
   try {
@@ -32,27 +88,70 @@ router.post('/plan/suggest', authenticate, async (req, res, next) => {
     const profile = await Profile.findByUserId(req.user.id);
     const existingTasks = await Task.findByWeekForUser(req.user.id, input.week_start);
 
+    const today = formatLocalDate(new Date());
+    const weekEnd = getWeekEnd(input.week_start);
+    const goalDeadline = goal.deadline ? formatLocalDate(goal.deadline) : null;
+
+    const allowedStart = input.week_start < today ? today : input.week_start;
+    const allowedEnd = goalDeadline && goalDeadline < weekEnd
+      ? goalDeadline
+      : weekEnd;
+
+    if (goalDeadline && goalDeadline < today) {
+      return res.status(400).json({
+        error: 'Goal deadline has already passed. Please update the goal deadline before generating AI suggestions.',
+      });
+    }
+
+    if (allowedEnd < allowedStart) {
+      return res.status(400).json({
+        error: 'No valid dates are available for this week. Please choose another week or update the goal deadline.',
+      });
+    }
+
     const context = {
-      goal: { title: goal.title, description: goal.description, deadline: goal.deadline },
-      availability: profile.availability,
-      weekly_target_hours: profile.weekly_target_hours,
-      preferred_time: profile.preferred_time,
-      existing_tasks: existingTasks.map(t => ({
-        title: t.title,
-        planned_date: t.planned_date,
-        planned_slot: t.planned_slot,
+      today,
+      week_start: input.week_start,
+      week_end: weekEnd,
+      allowed_start_date: allowedStart,
+      allowed_end_date: allowedEnd,
+      date_rules: [
+        `Do not suggest any task before ${allowedStart}.`,
+        `Do not suggest any task after ${allowedEnd}.`,
+        'All task planned_date values must be inside the allowed date range.',
+      ],
+      goal: {
+        title: goal.title,
+        description: goal.description,
+        deadline: goalDeadline,
+      },
+      availability: profile?.availability || {},
+      weekly_target_hours: profile?.weekly_target_hours || 5,
+      preferred_time: profile?.preferred_time || 'evening',
+      existing_tasks: existingTasks.map((task) => ({
+        title: task.title,
+        planned_date: formatLocalDate(task.planned_date),
+        planned_slot: task.planned_slot,
       })),
     };
 
     const raw = await callLLM('suggest', context);
 
-    const validated = validateAIOutput(raw);
- 
+    const validated = validateSuggestionDateRange(
+      validateAIOutput(raw),
+      allowedStart,
+      allowedEnd
+    );
+    
     if (!validated) {
       //retry
       const retry = await callLLM('suggest', context);
 
-      const retryValidated = validateAIOutput(retry);
+      const retryValidated = validateSuggestionDateRange(
+        validateAIOutput(retry),
+        allowedStart,
+        allowedEnd
+      );
       if (!retryValidated) {
         logger.warn({ request_id: req.requestId, action: 'ai_suggest_failed'});
         return res.status(422).json({
@@ -95,7 +194,9 @@ router.post('/plan/reschedule', authenticate, async (req, res, next) => {
       });
     }
 
+    const today = formatLocalDate(new Date());
     const weekStart = getCurrentWeekStart();
+    const weekEnd = getWeekEnd(weekStart);
     const week = getCurrentWeek();
 
     const weekTasks = await findTasksByWeek(req.user.id, weekStart);
@@ -119,15 +220,26 @@ router.post('/plan/reschedule', authenticate, async (req, res, next) => {
     const progress = progressResult.rows[0];
 
     const context = {
-      today: formatLocalDate(new Date()),
+      today,
+      allowed_start_date: today,
+      allowed_end_date: weekEnd,
+      date_rules: [
+        `Do not suggest any reschedule date before ${today}.`,
+        'Do not suggest a date after the related goal deadline.',
+        'Return multiple reschedule options with rationale bullet points.',
+      ],
 
       overdue_tasks: overdueTasks.map((task) => ({
         id: task.id,
         title: task.title,
         description: task.description,
         duration_estimate: task.duration_estimate,
-        original_date: task.planned_date,
+        original_date: formatLocalDate(task.planned_date),
         original_slot: task.planned_slot,
+        goal_title: task.goal_title,
+        goal_deadline: task.goal_deadline
+          ? formatLocalDate(task.goal_deadline)
+          : null,
       })),
 
       current_week_tasks: weekTasks
@@ -147,11 +259,19 @@ router.post('/plan/reschedule', authenticate, async (req, res, next) => {
     };
 
     const raw = await callLLM('reschedule', context);
-    const validated = validateRescheduleOutput(raw, task_ids);
+    const validated = filterValidRescheduleOptions(
+      validateRescheduleOutput(raw, task_ids),
+      overdueTasks,
+      today
+    );
 
     if (!validated) {
       const retry = await callLLM('reschedule', context);
-      const retryValidated = validateRescheduleOutput(retry, task_ids);
+      const retryValidated = filterValidRescheduleOptions(
+        validateRescheduleOutput(retry, task_ids),
+        overdueTasks,
+        today
+      );
 
       if (!retryValidated) {
         logger.warn({

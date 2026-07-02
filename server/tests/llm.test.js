@@ -121,17 +121,25 @@ describe('llm service', () => {
     const taskId = 'task-123';
 
     const raw = JSON.stringify({
-      task_id: taskId,
-      suggested_date: '2026-05-29',
-      suggested_slot: 'afternoon',
-      reason: 'This slot has fewer tasks',
+      options: [
+        {
+          task_id: taskId,
+          suggested_date: '2026-07-06',
+          suggested_slot: 'afternoon',
+          rationale: [
+            'This date is available.',
+            'The afternoon slot gives enough study time.',
+          ],
+        },
+      ],
+      summary: 'Suggested reschedule options.',
     });
 
     const result = validateRescheduleOutput(raw, [taskId]);
 
     expect(result).not.toBeNull();
-    expect(result.task_id).toBe(taskId);
-    expect(result.suggested_slot).toBe('afternoon');
+    expect(result.options[0].task_id).toBe(taskId);
+    expect(result.options[0].suggested_slot).toBe('afternoon');
   });
 
   test('validateRescheduleOutput rejects wrong task id', () => {
@@ -266,16 +274,24 @@ describe('validateAIOutput detailed validation', () => {
 
   test('validateRescheduleOutput accepts valid output without allowedTaskIds restriction', () => {
     const raw = JSON.stringify({
-      task_id: 'task-999',
-      suggested_date: '2026-04-15',
-      suggested_slot: 'morning',
-      reason: 'Morning has fewer tasks',
+      options: [
+        {
+          task_id: 'task-999',
+          suggested_date: '2026-07-06',
+          suggested_slot: 'morning',
+          rationale: [
+            'This is the earliest available slot.',
+            'Morning is suitable for focused learning.',
+          ],
+        },
+      ],
+      summary: 'Suggested reschedule options.',
     });
 
     const result = validateRescheduleOutput(raw);
 
     expect(result).not.toBeNull();
-    expect(result.task_id).toBe('task-999');
+    expect(result.options[0].task_id).toBe('task-999');
   });
 
   test('validateRescheduleOutput rejects invalid JSON', () => {

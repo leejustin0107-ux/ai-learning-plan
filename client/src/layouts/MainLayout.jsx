@@ -11,9 +11,13 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import '../styles/mainLayout.css';
+import OnboardingModal from '../components/OnboardingModal';
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(
+    localStorage.getItem('showOnboarding') === 'true'
+  );
 
   const navigate = useNavigate();
 
@@ -120,6 +124,10 @@ export default function MainLayout() {
       <main className="content" tabIndex={-1}>
         <Outlet />
       </main>
+
+      {showOnboarding && (
+        <OnboardingModal onClose={() => setShowOnboarding(false)} />
+      )}
     </div>
   );
 }

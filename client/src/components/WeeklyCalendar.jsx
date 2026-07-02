@@ -156,6 +156,58 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
     }
   }
 
+  function toDateString(dateValue) {
+    if (!dateValue) return '';
+
+    if (typeof dateValue === 'string') {
+      return dateValue.slice(0, 10);
+    }
+
+    const date = new Date(dateValue);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  async function handleExportWeeklyCalendar() {
+    try {
+      const exportWeekStart = toDateString(weekStart);
+      const token = localStorage.getItem('token')?.trim();
+
+      const response = await fetch(
+        `/api/export/weekly.ics?week_start=${exportWeekStart}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to export weekly calendar');
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `ai-learning-plan-${exportWeekStart}.ics`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error('failed to export weekly calendar:', err);
+      alert(err.message);
+    }
+  }
+
   if (loading) {
     return (
       <div className="weekly-calendar">
@@ -166,24 +218,36 @@ export default function WeeklyCalendar({ refreshKey, onTaskClick, onSlotClick })
 
   return (
     <div className="weekly-calendar">
-      <div className="calendar-header">
+      <div className="calendar-header calendar-toolbar">
         <button
           type="button"
+          className="week-nav-button"
           onClick={() => navigateWeek(-1)}
           aria-label="Go to previous week"
         >
           <ChevronLeft size={20} aria-hidden="true" />
         </button>
 
-        <h3>Week of {weekStart}</h3>
+        <h3 className="calendar-week-title">Week of {weekStart}</h3>
 
-        <button
-          type="button"
-          onClick={() => navigateWeek(1)}
-          aria-label="Go to next week"
-        >
-          <ChevronRight size={20} aria-hidden="true" />
-        </button>
+        <div className="calendar-toolbar-actions">
+          <button
+            type="button"
+            className="export-calendar-button"
+            onClick={handleExportWeeklyCalendar}
+          >
+            Export Week to Calendar
+          </button>
+
+          <button
+            type="button"
+            className="week-nav-button"
+            onClick={() => navigateWeek(1)}
+            aria-label="Go to next week"
+          >
+            <ChevronRight size={20} aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       {error ? (

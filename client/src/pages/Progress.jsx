@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import '../styles/progress.css'
 import EmptyState from '../components/EmptyState';
@@ -23,6 +24,8 @@ export default function Progress() {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasAnyGoals, setHasAnyGoals] = useState(false);
+  const navigate = useNavigate();
 
   function changeWeek(week, offset) {
     const [yearPart, weekPart] = week.split('-W');
@@ -68,9 +71,27 @@ export default function Progress() {
     }
   }
 
+  async function fetchGoalOverview() {
+    try {
+      const data = await api.get('/goals');
+
+      const goalsArray = Array.isArray(data)
+        ? data
+        : data.goals || [];
+
+      setHasAnyGoals(goalsArray.length > 0);
+    } catch (err) {
+      console.error('Failed to fetch goals for progress empty state:', err);
+    }
+  }
+
   useEffect(() => {
     fetchProgress();
   }, [week]);
+
+  useEffect(() => {
+    fetchGoalOverview();
+  }, []);
 
   if (loading) {
     return (
@@ -124,7 +145,17 @@ export default function Progress() {
       {error ? (
         <ErrorState message={error} onRetry={fetchProgress} />
       ) : !hasProgressData ? (
-        <EmptyState type="progress" />
+        hasAnyGoals ? (
+          <EmptyState
+            type="progressWeek"
+            onAction={() => navigate('/goals')}
+          />
+        ) : (
+          <EmptyState
+            type="progress"
+            onAction={() => navigate('/goals')}
+          />
+        )
       ) : (
         <div className="progress-dashboard">
           <div className="progress-summary-card">

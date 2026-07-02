@@ -52,11 +52,14 @@ async function findTasksByIds(userId, taskIds) {
   const placeholders = taskIds.map((_, i) => `$${i + 2}`).join(',');
 
   const result = await db.query(
-    `SELECT t.*
-     FROM tasks t
-     JOIN goals g ON t.goal_id = g.id
-     WHERE g.user_id = $1
-     AND t.id IN (${placeholders})`,
+    `SELECT 
+        t.*,
+        g.deadline AS goal_deadline,
+        g.title AS goal_title
+    FROM tasks t
+    JOIN goals g ON t.goal_id = g.id
+    WHERE g.user_id = $1
+    AND t.id IN (${placeholders})`,
     [userId, ...taskIds]
   );
 

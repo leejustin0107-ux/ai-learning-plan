@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Pencil,
 } from 'lucide-react';
+import useFocusTrap from '../hooks/useFocusTrap';
 import '../styles/goals.css';
 
 export default function Goals() {
@@ -46,7 +47,21 @@ export default function Goals() {
   const [error, setError] = useState(null);
   const todayDate = getTodayDateString();
 
-  const weekStart = '2026-05-11';
+  const weekStart = getCurrentWeekStartString();
+  
+  const addGoalModalRef = useFocusTrap(showModal, () => setShowModal(false));
+
+  const addTaskModalRef = useFocusTrap(Boolean(activeTaskGoalId), () =>
+    setActiveTaskGoalId(null)
+  );
+
+  const aiModalRef = useFocusTrap(Boolean(activeAIGoalId), () =>
+    setActiveAIGoalId(null)
+  );
+
+  const editGoalModalRef = useFocusTrap(Boolean(editingGoalId), closeEditGoalModal);
+
+  const editTaskModalRef = useFocusTrap(Boolean(editingTaskId), closeEditTaskModal);
 
   function handleTaskFormChange(goalId, field, value) {
     setTaskForms((prev) => ({
@@ -260,6 +275,8 @@ export default function Goals() {
 
         return updated
       });
+
+      await loadGoalsAndTasks();
     } catch (err) {
     console.error('failed to delete task:', err);
     alert(err.message);
@@ -532,6 +549,21 @@ function closeEditGoalModal() {
     return formatLocalDate(task.planned_date);
   }
 
+  function getCurrentWeekStartString() {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+
+    const monday = new Date(today);
+    monday.setDate(diff);
+
+    const year = monday.getFullYear();
+    const month = String(monday.getMonth() + 1).padStart(2, '0');
+    const date = String(monday.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${date}`;
+  }
+
   async function handleRescheduleTask(taskId) {
     try {
       setReschedulingTaskId(taskId);
@@ -557,15 +589,13 @@ function closeEditGoalModal() {
     }
   }
 
-  async function handleAcceptReschedule(taskId) {
-    const suggestion = rescheduleSuggestions[taskId];
-
-    if (!suggestion) return;
+  async function handleAcceptReschedule(taskId, option) {
+    if (!option) return;
 
     try {
       const data = await api.patch(`/tasks/${taskId}/schedule`, {
-        planned_date: suggestion.suggested_date,
-        planned_slot: suggestion.suggested_slot,
+        planned_date: option.suggested_date,
+        planned_slot: option.suggested_slot,
       });
 
       const updatedTask = data.task;
@@ -620,9 +650,16 @@ function closeEditGoalModal() {
 
       {showModal && (
         <div className="modal-overlay">
-          <div className="goal-modal">
+          <div
+            ref={addGoalModalRef}
+            className="goal-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-goal-title"
+            tabIndex={-1}
+          >
             <div className="goal-modal-header">
-              <h2>Add New Goal</h2>
+              <h2 id="add-goal-title">Add New Goal</h2>
               <p>Create a new learning goal and set an optional deadline.</p>
             </div>
             <form className="goal-modal-form" onSubmit={handleCreate}>
@@ -772,7 +809,7 @@ function closeEditGoalModal() {
                               <Pencil size={18} aria-hidden="true" />
                             </button>
 
-                            {getTaskStatus(task) === 'overdue' ? (
+                            {getTaskStatus(task) === 'overdue' && (
                               <button 
                                 type="button" 
                                 className="icon-button reschedule-button"
@@ -783,7 +820,9 @@ function closeEditGoalModal() {
                               >
                                 <RotateCcw size={17} aria-hidden="true" />
                               </button>
-                            ) : getTaskStatus(task) === 'finished' ? (
+                            )}
+
+                            {getTaskStatus(task) === 'finished' ? (
                               <span className="finished-label">Done</span>
                             ) : (
                               <button
@@ -808,41 +847,63 @@ function closeEditGoalModal() {
                             </button>
                           </div>
 
-                          {rescheduleSuggestions[task.id] && (
+                          {reschedulingTaskId === task.id && (
                             <div className="goal-reschedule-suggestion">
-                              <h4>AI Reschedule Suggestion</h4>
+                              <h4>Generating reschedule options...</h4>
 
-                              <p>
-                                <strong>New Date:</strong>{' '}
-                                {rescheduleSuggestions[task.id].suggested_date}
-                              </p>
+                              <div className="reschedule-option-skeleton">
+                                <div />
+                                <div />
+                                <div />
+                              </div>
+                            </div>
+                          )}
 
-                              <p>
-                                <strong>New Slot:</strong>{' '}
-                                {rescheduleSuggestions[task.id].suggested_slot}
-                              </p>
-
-                              <p>
-                                <strong>Reason:</strong>{' '}
-                                {rescheduleSuggestions[task.id].reason}
-                              </p>
-
-                              <div className="reschedule-actions">
-                                <button
-                                  type="button"
-                                    className="accept-button"
-                                    onClick={() => handleAcceptReschedule(task.id)}
-                                >
-                                  Accept
-                                </button>
+                          {rescheduleSuggestions[task.id]?.options?.length > 0 && (
+                            <div className="goal-reschedule-suggestion">
+                              <div className="reschedule-suggestion-header">
+                                <div>
+                                  <h4>AI Reschedule Options</h4>
+                                  <p>Choose the option that fits your current schedule.</p>
+                                </div>
 
                                 <button
                                   type="button"
                                   className="decline-button"
                                   onClick={() => handleDeclineReschedule(task.id)}
                                 >
-                                  Decline
+                                  Close
                                 </button>
+                              </div>
+
+                              <div className="reschedule-option-list">
+                                {rescheduleSuggestions[task.id].options.map((option, index) => (
+                                  <article
+                                    className="reschedule-option-card"
+                                    key={`${option.task_id}-${option.suggested_date}-${option.suggested_slot}-${index}`}
+                                  >
+                                    <div className="reschedule-option-top">
+                                      <span>Option {index + 1}</span>
+                                      <strong>
+                                        {option.suggested_date} · {option.suggested_slot}
+                                      </strong>
+                                    </div>
+
+                                    <ul className="reschedule-rationale-list">
+                                      {option.rationale.map((reason, reasonIndex) => (
+                                        <li key={reasonIndex}>{reason}</li>
+                                      ))}
+                                    </ul>
+
+                                    <button
+                                      type="button"
+                                      className="accept-button"
+                                      onClick={() => handleAcceptReschedule(task.id, option)}
+                                    >
+                                      Accept this option
+                                    </button>
+                                  </article>
+                                ))}
                               </div>
                             </div>
                           )}
@@ -860,13 +921,20 @@ function closeEditGoalModal() {
                 
               {activeTaskGoalId === goal.id && (
                 <div className="task-modal-overlay">
-                  <div className="task-modal">
+                  <div
+                    ref={addTaskModalRef}
+                    className="task-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={`add-task-title-${goal.id}`}
+                    tabIndex={-1}
+                  >
                     <form
                       className="task-modal-form"
                       onSubmit={(e) => handleCreateTask(e, goal.id)}
                     >
                       <div className="task-modal-header">
-                        <h2>Add Manual Task</h2>
+                        <h2 id={`add-task-title-${goal.id}`}>Add Manual Task</h2>
                         <p>Add a task for: {goal.title}</p>
                       </div>
 
@@ -973,10 +1041,17 @@ function closeEditGoalModal() {
 
               {activeAIGoalId === goal.id && (
                 <div className="ai-modal-overlay">
-                  <div className="ai-modal">
+                  <div
+                    ref={aiModalRef}
+                    className="ai-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={`ai-suggestion-title-${goal.id}`}
+                    tabIndex={-1}
+                  >
                     <div className="ai-modal-header">
                       <div>
-                        <h2>AI Task Suggestions</h2>
+                        <h2 id={`ai-suggestion-title-${goal.id}`}>AI Task Suggestions</h2>
                         <p>Generate task breakdowns for: {goal.title}</p>
                       </div>
 
@@ -984,6 +1059,8 @@ function closeEditGoalModal() {
                         type="button"
                         className="ai-modal-close"
                         onClick={() => setActiveAIGoalId(null)}
+                        aria-label="Close AI task suggestions modal"
+                        title="Close"
                       >
                         ×
                       </button>
@@ -1004,10 +1081,17 @@ function closeEditGoalModal() {
 
       {editingGoalId && (
         <div className="task-modal-overlay">
-          <div className="task-modal">
+          <div
+            ref={editGoalModalRef}
+            className="task-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-goal-title"
+            tabIndex={-1}
+          >
             <form className="task-modal-form" onSubmit={handleUpdateGoal}>
               <div className="task-modal-header">
-                <h2>Edit Goal</h2>
+                <h2 id="edit-goal-title">Edit Goal</h2>
                 <p>Update your learning goal details.</p>
               </div>
 
@@ -1078,10 +1162,17 @@ function closeEditGoalModal() {
 
       {editingTaskId && (
         <div className="task-modal-overlay">
-          <div className="task-modal">
+          <div
+            ref={editTaskModalRef}
+            className="task-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-task-title"
+            tabIndex={-1}
+          >
             <form className="task-modal-form" onSubmit={handleUpdateTask}>
               <div className="task-modal-header">
-                <h2>Edit Task</h2>
+                <h2 id="edit-task-title">Edit Task</h2>
                 <p>Update task details and schedule.</p>
               </div>
 

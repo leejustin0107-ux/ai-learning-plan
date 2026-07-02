@@ -6,6 +6,9 @@ const logger = require('../utils/logger');
 const db = require('../utils/db');
 const Task = require('../models/Task');
 const { recalculateProgress } = require('../services/progress');
+const appEvents = require('../services/events');
+const { getCurrentWeek } = require('../utils/week');
+
 
 router.post('/tasks', authenticate, async (req, res, next) => {
   try {
@@ -51,22 +54,40 @@ router.post('/tasks', authenticate, async (req, res, next) => {
 
 router.get('/tasks', authenticate, async (req, res, next) => {
   try {
-    const { week_start } = req.query; // format: 2026-04-06
- 
-    if (!week_start) {
-      return res.status(400).json({ error: 'Parameter week_start diperlukan (format: YYYY-MM-DD)' });
+    const requestedWeekStart = String(
+      req.query.week_start || req.query.weekStart || ''
+    ).trim();
+
+    if (!requestedWeekStart || !/^\d{4}-\d{2}-\d{2}$/.test(requestedWeekStart)) {
+      return res.status(400).json({
+        error: 'week_start must use YYYY-MM-DD format',
+      });
     }
- 
-    const weekEnd = new Date(week_start);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-    const weekEndString = weekEnd.toISOString().split('T')[0];
+
+    const weekStart = requestedWeekStart;
+
+    const weekEndDate = new Date(`${weekStart}T00:00:00`);
+
+    if (Number.isNaN(weekEndDate.getTime())) {
+      return res.status(400).json({
+        error: 'week_start must be a valid date',
+      });
+    }
+
+    weekEndDate.setDate(weekEndDate.getDate() + 6);
+
+    const year = weekEndDate.getFullYear();
+    const month = String(weekEndDate.getMonth() + 1).padStart(2, '0');
+    const day = String(weekEndDate.getDate()).padStart(2, '0');
+
+    const weekEnd = `${year}-${month}-${day}`;
  
     const tasks = await db.query(
       `SELECT * FROM tasks
        WHERE goal_id IN (SELECT id FROM goals WHERE user_id = $1)
        AND planned_date BETWEEN $2 AND $3
        ORDER BY planned_date, planned_slot`,
-      [req.user.id, week_start, weekEndString]
+      [req.user.id, weekStart, weekEnd]
     );
     
     function formatLocalDate(date) {
@@ -79,7 +100,6 @@ router.get('/tasks', authenticate, async (req, res, next) => {
       return `${year}-${month}-${day}`;
     }
 
-    // Kelompokkan per hari untuk memudahkan rendering kalender
     const grouped = {};
     for (const task of tasks.rows) {
       const day = formatLocalDate(task.planned_date);
@@ -87,7 +107,7 @@ router.get('/tasks', authenticate, async (req, res, next) => {
       grouped[day].push(task);
     }
  
-    res.json({ week_start, week_end: weekEndString, tasks: grouped });
+    res.json({ weekStart, weekEnd, tasks: grouped });
   } catch (err) {
     next(err);
   }
@@ -124,7 +144,32 @@ router.get('/goals/:goalId/tasks', authenticate, async (req, res, next) => {
 
 router.patch('/tasks/:taskId/status', authenticate, async (req, res, next) => {
   try {
-    const { actual_duration } = req.body || {};
+    const { status = 'done', actual_duration } = req.body || {};
+
+    if (status !== 'done') {
+      return res.status(400).json({
+        error: 'Status transition is not allowed',
+      });
+    }
+
+    const taskCheck = await db.query(
+      `SELECT t.*
+       FROM tasks t
+       JOIN goals g ON t.goal_id = g.id
+       WHERE t.id = $1
+       AND g.user_id = $2`,
+      [req.params.taskId, req.user.id]
+    );
+
+    if (!taskCheck.rows.length) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const existingTask = taskCheck.rows[0];
+
+    if (existingTask.status === 'done') {
+      return res.json({ task: existingTask });
+    }
 
     const result = await db.query(
       `UPDATE tasks t
@@ -139,15 +184,35 @@ router.patch('/tasks/:taskId/status', authenticate, async (req, res, next) => {
       [req.params.taskId, req.user.id, actual_duration]
     );
 
-    if (!result.rows.length) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-
     const updatedTask = result.rows[0];
-
 
     if (updatedTask.planned_date) {
       await recalculateProgress(req.user.id, updatedTask.planned_date);
+    }
+
+    appEvents.emit('task:completed', {
+      userId: req.user.id,
+      taskId: updatedTask.id,
+    });
+
+    const currentWeek = getCurrentWeek();
+
+    const weekProgress = await db.query(
+      `SELECT completion_rate
+       FROM progress_snapshots
+       WHERE user_id = $1 AND week = $2`,
+      [req.user.id, currentWeek]
+    );
+
+    const completionRate = parseFloat(
+      weekProgress.rows[0]?.completion_rate || 0
+    );
+
+    if (completionRate >= 1.0) {
+      appEvents.emit('milestone:reached', {
+        userId: req.user.id,
+        milestone: `week_${currentWeek}_complete`,
+      });
     }
 
     res.json({ task: updatedTask });

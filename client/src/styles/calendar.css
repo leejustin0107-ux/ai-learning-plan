@@ -436,3 +436,595 @@
 .time-slot.drag-over .slot-label {
   color: #1d4ed8;
 }
+
+.reschedule-suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.reschedule-suggestion-header h3,
+.reschedule-suggestion-header h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.reschedule-suggestion-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.reschedule-option-list {
+  display: grid;
+  gap: 12px;
+}
+
+.reschedule-option-card {
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+}
+
+.reschedule-option-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.reschedule-option-top span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.reschedule-option-top strong {
+  color: #111827;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.reschedule-rationale-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.reschedule-option-card .accept-button {
+  width: 100%;
+}
+
+.reschedule-option-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.reschedule-option-skeleton div {
+  height: 78px;
+  border-radius: 14px;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 45%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+  animation: rescheduleSkeletonPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes rescheduleSkeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ========================= */
+/* POLISHED CALENDAR TASK MODAL */
+/* ========================= */
+
+.task-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 24px;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  box-sizing: border-box;
+}
+
+.calendar-task-modal {
+  position: relative;
+
+  width: min(760px, 94vw);
+  max-height: 86vh;
+  overflow-y: auto;
+
+  padding: 26px;
+  border-radius: 22px;
+  background-color: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.32);
+  box-sizing: border-box;
+}
+
+.task-popup-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 999px;
+
+  background-color: #f1f5f9;
+  color: #334155;
+
+  font-size: 22px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.task-popup-close:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.calendar-task-modal-header {
+  padding-right: 48px;
+  margin-bottom: 18px;
+}
+
+.calendar-task-modal-header h2 {
+  margin: 10px 0 8px;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.calendar-task-modal-header p {
+  max-width: 640px;
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.calendar-task-status-pill {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 28px;
+  padding: 5px 11px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: capitalize;
+}
+
+.calendar-task-status-pill.ongoing {
+  background-color: #eef2ff;
+  color: #3730a3;
+}
+
+.calendar-task-status-pill.overdue {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.calendar-task-status-pill.finished {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.calendar-task-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+
+  margin-bottom: 18px;
+}
+
+.calendar-task-detail-card {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background-color: #f8fafc;
+}
+
+.calendar-task-detail-card span {
+  display: block;
+  margin-bottom: 6px;
+
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calendar-task-detail-card strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 850;
+  text-transform: capitalize;
+}
+
+.calendar-task-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.calendar-modal-done-button,
+.calendar-modal-reschedule-button,
+.calendar-modal-delete-button,
+.calendar-reschedule-close-button,
+.calendar-reschedule-accept-button {
+  min-height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 850;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.calendar-modal-done-button {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.calendar-modal-done-button:hover {
+  background-color: #22c55e;
+  color: #ffffff;
+}
+
+.calendar-modal-reschedule-button {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.calendar-modal-reschedule-button:hover:not(:disabled) {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+.calendar-modal-reschedule-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.calendar-modal-delete-button {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.calendar-modal-delete-button:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.calendar-reschedule-panel {
+  margin-top: 18px;
+  padding: 18px;
+
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.calendar-reschedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+
+  margin-bottom: 14px;
+}
+
+.calendar-reschedule-header h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.calendar-reschedule-header p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.calendar-reschedule-close-button {
+  flex-shrink: 0;
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.calendar-reschedule-close-button:hover {
+  background-color: #e2e8f0;
+  color: #111827;
+}
+
+.calendar-reschedule-option-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.calendar-reschedule-option-card {
+  display: flex;
+  flex-direction: column;
+
+  padding: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+
+  background-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+}
+
+.calendar-reschedule-option-top {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.calendar-reschedule-option-top span {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 26px;
+  padding: 4px 9px;
+
+  border-radius: 999px;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.calendar-reschedule-option-top strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 850;
+  text-transform: capitalize;
+}
+
+.calendar-reschedule-rationale-list {
+  flex: 1;
+
+  margin: 0 0 14px;
+  padding-left: 18px;
+
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.calendar-reschedule-rationale-list li {
+  margin-bottom: 6px;
+}
+
+.calendar-reschedule-accept-button {
+  width: 100%;
+  margin-top: auto;
+
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.calendar-reschedule-accept-button:hover {
+  background-color: #22c55e;
+  color: #ffffff;
+}
+
+.calendar-reschedule-skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.calendar-reschedule-skeleton div {
+  height: 180px;
+  border-radius: 16px;
+
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 45%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+
+  animation: calendarRescheduleSkeletonPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes calendarRescheduleSkeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ========================= */
+/* RESPONSIVE MODAL */
+/* ========================= */
+
+@media (max-width: 900px) {
+  .calendar-reschedule-option-list,
+  .calendar-reschedule-skeleton {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-task-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .task-popup-overlay {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .calendar-task-modal {
+    padding: 22px;
+  }
+
+  .calendar-task-modal-actions {
+    flex-direction: column;
+  }
+
+  .calendar-modal-done-button,
+  .calendar-modal-reschedule-button,
+  .calendar-modal-delete-button {
+    width: 100%;
+  }
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.calendar-week-title {
+  flex: 1;
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.calendar-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.week-nav-button {
+  width: 42px;
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 12px;
+
+  background-color: #eef2ff;
+  color: #1d4ed8;
+
+  cursor: pointer;
+}
+
+.week-nav-button:hover {
+  background-color: #dbeafe;
+}
+
+.export-calendar-button {
+  min-height: 42px;
+  padding: 0 14px;
+
+  border: none;
+  border-radius: 12px;
+
+  background-color: #2563eb;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 850;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.export-calendar-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.export-calendar-button:focus-visible,
+.week-nav-button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .calendar-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendar-week-title {
+    text-align: left;
+  }
+
+  .calendar-toolbar-actions {
+    justify-content: space-between;
+  }
+
+  .export-calendar-button {
+    flex: 1;
+  }
+}

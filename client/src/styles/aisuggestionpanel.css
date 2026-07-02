@@ -154,3 +154,85 @@
     width: 100%;
   }
 }
+
+.ai-skeleton-panel {
+  background-color: #f8fafc;
+}
+
+.ai-skeleton-header {
+  margin-bottom: 18px;
+}
+
+.ai-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-skeleton-card {
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background-color: #ffffff;
+}
+
+.ai-skeleton-line,
+.ai-skeleton-pill {
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 45%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+  animation: aiSkeletonPulse 1.2s ease-in-out infinite;
+}
+
+.ai-skeleton-title {
+  width: 180px;
+  height: 22px;
+  margin-bottom: 10px;
+}
+
+.ai-skeleton-subtitle {
+  width: 280px;
+  height: 14px;
+}
+
+.ai-skeleton-card-title {
+  width: 55%;
+  height: 18px;
+  margin-bottom: 12px;
+}
+
+.ai-skeleton-card-text {
+  width: 92%;
+  height: 13px;
+  margin-bottom: 9px;
+}
+
+.ai-skeleton-card-text.short {
+  width: 68%;
+}
+
+.ai-skeleton-meta-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ai-skeleton-pill {
+  width: 76px;
+  height: 28px;
+}
+
+@keyframes aiSkeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

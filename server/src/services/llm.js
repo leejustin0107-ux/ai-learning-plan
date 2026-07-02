@@ -23,11 +23,16 @@ const SuggestionSchema = z.object({
   summary: z.string(),
 });
 
-const RescheduleSchema = z.object({
+const RescheduleOptionSchema = z.object({
   task_id: z.string().min(1),
   suggested_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   suggested_slot: z.enum(['morning', 'afternoon', 'evening']),
-  reason: z.string().min(1),
+  rationale: z.array(z.string().min(1)).min(1),
+});
+
+const RescheduleSchema = z.object({
+  options: z.array(RescheduleOptionSchema).min(1),
+  summary: z.string().min(1),
 });
 
 function sanitizeContext(context) {
@@ -71,14 +76,20 @@ function validateRescheduleOutput(raw, allowedTaskIds = []) {
     const parsed = JSON.parse(cleaned);
     const validated = RescheduleSchema.parse(parsed);
 
-    if (
-      allowedTaskIds.length > 0 &&
-      !allowedTaskIds.includes(validated.task_id)
-    ) {
+    const filteredOptions = allowedTaskIds.length
+      ? validated.options.filter((option) =>
+          allowedTaskIds.includes(option.task_id)
+        )
+      : validated.options;
+
+    if (filteredOptions.length === 0) {
       return null;
     }
 
-    return validated;
+    return {
+      ...validated,
+      options: filteredOptions,
+    };
   } catch (error) {
     console.error('AI reschedule validation failed:', error.message);
     return null;
@@ -133,6 +144,14 @@ async function callLLMReal(type, context) {
       duration_ms: Date.now() - start,
     });
 
+    if (err.message?.includes('503') || err.message?.includes('high demand')) {
+      const serviceError = new Error(
+        'AI service is temporarily busy. Please try again in a few moments.'
+      );
+      serviceError.statusCode = 503;
+      throw serviceError;
+    }
+
     throw err;
   }
 }
@@ -142,15 +161,49 @@ async function callLLMReal(type, context) {
 async function callLLMMock(type, context) {
   const safeContext = sanitizeContext(context);
 
+  const plannedDate =
+  safeContext.allowed_start_date ||
+  safeContext.today ||
+  new Date().toISOString().slice(0, 10);
+
   if (type === 'reschedule') {
-    const task = context.overdue_tasks?.[0];
+    const task = safeContext.overdue_tasks?.[0];
+    const startDate = safeContext.allowed_start_date || safeContext.today;
 
     return JSON.stringify({
-      task_id: task?.id,
-      suggested_date: safeContext.today,
-      suggested_slot: 'morning',
-      reason:
-        'This overdue task is moved to the earliest available slot based on the current week schedule.',
+      options: [
+        {
+          task_id: task?.id,
+          suggested_date: startDate,
+          suggested_slot: 'morning',
+          rationale: [
+            'Earliest available date after today.',
+            'Morning slot keeps the task away from the previous overdue slot.',
+            'Good option if the user wants to finish the task quickly.',
+          ],
+        },
+        {
+          task_id: task?.id,
+          suggested_date: startDate,
+          suggested_slot: 'afternoon',
+          rationale: [
+            'Keeps the task on the same day but gives more preparation time.',
+            'Afternoon is a balanced option for a medium-duration task.',
+            'Useful if the user cannot study in the morning.',
+          ],
+        },
+        {
+          task_id: task?.id,
+          suggested_date: startDate,
+          suggested_slot: 'evening',
+          rationale: [
+            'Evening slot is suitable if the user prefers later study sessions.',
+            'Still avoids scheduling before today.',
+            'Keeps the task realistic while reducing pressure.',
+          ],
+        },
+      ],
+      summary: 'Here are several possible reschedule options for the overdue task.',
     });
   }
 
@@ -160,7 +213,7 @@ async function callLLMMock(type, context) {
         title: 'Belajar React Hooks - useState dan useEffect',
         description: 'Pelajari dua hooks dasar React melalui dokumentasi resmi dan praktik langsung',
         duration_estimate: 45,
-        planned_date: '2026-04-15',
+        planned_date: plannedDate,
         planned_slot: 'morning',
         rationale: 'Slot pagi tersedia, durasi 45 menit sesuai preferensi sesi pendek, hooks adalah fondasi untuk komponen selanjutnya',
       },
@@ -171,4 +224,4 @@ async function callLLMMock(type, context) {
 const callLLM = config.llmProvider === 'mock' ? callLLMMock : callLLMReal;
 
 
-module.exports = { callLLM, sanitizeContext, validateAIOutput, validateRescheduleOutput, SuggestionSchema, TaskSchema, RescheduleSchema, };
+module.exports = { callLLM, sanitizeContext, validateAIOutput, validateRescheduleOutput, SuggestionSchema, TaskSchema, RescheduleSchema, RescheduleOptionSchema, };

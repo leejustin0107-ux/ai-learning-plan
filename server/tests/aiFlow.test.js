@@ -1,17 +1,43 @@
 require('dotenv').config();
 
+process.env.LLM_PROVIDER = 'mock';
+process.env.GEMINI_API_KEY = 'test-key';
+
 const request = require('supertest');
 const app = require('../src/app');
 const db = require('../src/utils/db');
-
-process.env.LLM_PROVIDER = 'mock';
-process.env.GEMINI_API_KEY = 'test-key';
 
 let token;
 let goalId;
 
 const testEmail = `aiflow-test-${Date.now()}@test.com`;
 const testPassword = 'test12345678';
+
+function getCurrentWeekStart() {
+  const today = new Date();
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+
+  const monday = new Date(today);
+  monday.setDate(diff);
+
+  const year = monday.getFullYear();
+  const month = String(monday.getMonth() + 1).padStart(2, '0');
+  const date = String(monday.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${date}`;
+}
+
+function getFutureDate(daysFromToday = 21) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromToday);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 beforeAll(async () => {
   // Register test user
@@ -34,7 +60,7 @@ beforeAll(async () => {
     .send({
       title: 'Test Goal for AI',
       description: 'Goal used for AI flow integration test',
-      deadline: '2026-05-01',
+      deadline: getFutureDate(30),
     });
 
   expect([200, 201]).toContain(goalRes.status);
@@ -52,9 +78,7 @@ afterAll(async () => {
     [testEmail]
   );
 
-  // Important:
-  // Only keep this if this is your only database integration test.
-  // If progress.test.js also calls db.pool.end(), only one file should close the pool.
+  
   if (db.pool && typeof db.pool.end === 'function') {
     await db.pool.end();
   }
@@ -67,7 +91,7 @@ describe('AI Suggestion Flow', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({
         goal_id: goalId,
-        week_start: '2026-04-13',
+        week_start: getCurrentWeekStart(),
       });
 
     expect(res.status).toBe(200);
@@ -80,20 +104,19 @@ describe('AI Suggestion Flow', () => {
   });
 
   test('suggest → accept → task appears in calendar', async () => {
-    // 1. Request suggestion
+    const weekStart = getCurrentWeekStart();
     const suggestRes = await request(app)
       .post('/api/ai/plan/suggest')
       .set('Authorization', `Bearer ${token}`)
       .send({
         goal_id: goalId,
-        week_start: '2026-04-13',
+        week_start: getCurrentWeekStart(),
       });
 
     expect(suggestRes.status).toBe(200);
 
     const task = suggestRes.body.tasks[0];
 
-    // 2. Accept task by creating it
     const createRes = await request(app)
       .post('/api/tasks')
       .set('Authorization', `Bearer ${token}`)
@@ -105,14 +128,13 @@ describe('AI Suggestion Flow', () => {
 
     expect([200, 201]).toContain(createRes.status);
 
-    // Adjust depending on your backend response shape
     const createdTask = createRes.body.task || createRes.body;
 
     expect(createdTask.source).toBe('ai');
 
-    // 3. Verify task appears in calendar
     const calendarRes = await request(app)
-      .get('/api/tasks?week_start=2026-04-13')
+      .get('/api/tasks')
+      .query({ week_start: weekStart })
       .set('Authorization', `Bearer ${token}`);
 
     expect(calendarRes.status).toBe(200);
@@ -128,7 +150,7 @@ describe('AI Suggestion Flow', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({
         goal_id: '00000000-0000-0000-0000-000000000000',
-        week_start: '2026-04-13',
+        week_start: getCurrentWeekStart(),
       });
 
     expect(res.status).toBe(404);
@@ -139,7 +161,7 @@ describe('AI Suggestion Flow', () => {
       .post('/api/ai/plan/suggest')
       .send({
         goal_id: goalId,
-        week_start: '2026-04-13',
+        week_start: getCurrentWeekStart(),
       });
 
     expect(res.status).toBe(401);

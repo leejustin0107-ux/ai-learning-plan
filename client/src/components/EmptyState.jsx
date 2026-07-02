@@ -17,8 +17,14 @@ export default function EmptyState({ type, onAction }) {
     },
     progress: {
       title: 'No progress data yet',
-      description: 'Progress data will appear after you start completing tasks.',
-      action: null,
+      description: 'Create a goal, add tasks, and mark tasks as done to generate weekly progress.',
+      action: 'Create your first goal',
+    },
+
+    progressWeek: {
+      title: 'No tasks planned for this week',
+      description: 'You have learning data, but this selected week does not have planned or completed tasks yet.',
+      action: 'Plan tasks for this week',
     },
   };
 

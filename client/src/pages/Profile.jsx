@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PageSkeleton } from '../components/Skeleton';
+import useFocusTrap from '../hooks/useFocusTrap';
 import '../styles/profile.css';
 
 const dayOrder = [
@@ -50,6 +51,8 @@ export default function Profile() {
 
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  const profileModalRef = useFocusTrap(showModal, closeEditModal);
 
   async function fetchProfile() {
     try {
@@ -293,10 +296,12 @@ export default function Profile() {
       {showModal && (
         <div className="profile-modal-overlay">
           <div
+            ref={profileModalRef}
             className="profile-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-profile-title"
+            tabIndex={-1}
           >
             <div className="profile-modal-header">
               <div>

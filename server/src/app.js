@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const goalRoutes = require('./routes/goals');
 const tasksRoutes = require('./routes/tasks');
 const progressRoutes = require('./routes/progress');
+const exportRoutes = require('./routes/export');
 
 const app = express();
 app.set('etag', false);
@@ -25,12 +26,9 @@ app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes);
 app.use('/api', tasksRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/export', exportRoutes);
 
-// TODO: Aktifkan setelah modul Cycle 2
-// const progressRoutes = require('./routes/progress');
-// app.use('/api/progress', progressRoutes);
 
-// TODO: Tambahkan error handler di paling akhir (modul Scaffolding)
 app.use(errorHandler);
 
 
